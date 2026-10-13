@@ -4,7 +4,7 @@
 
 - Standalone GenLayer contract retains the required public ABI, exact collateral accounting, fixed four-clause semantics, independent leader/validator classification, single-claim accounting and expired-reserve release.
 - Fake-runtime tests cover core security and lifecycle behavior, including multiple-bond reserve separation and the 12-subscriber limit.
-- Native Direct Mode tests are present for persistent contract state, frozen enrollment and exact payable funding. They have not completed on this host.
+- Native Direct Mode tests are present for persistent state, frozen enrollment, exact payable funding, mocked web rendering and validator dissent. They have not completed on this host.
 - Frontend retains its black/yellow Comic Sans editorial design and adds contract-bound date checks plus a stored transaction hash and explicit finality-resume flow.
 - CI installs pinned GenLayer test/lint tools, runs static contract lint and the pytest suite, and uses `npm ci` for frontend checks.
 - `deployments/studio-dev.json` records only verified environment metadata and pending release fields; it contains no fabricated deployment or transaction data.

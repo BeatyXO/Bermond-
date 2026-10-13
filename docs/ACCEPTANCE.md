@@ -11,7 +11,7 @@ Status markers: [x] static/source artifact present, [ ] requires runtime/live ve
 - [x] Semantic validator re-fetch and independently classify policy sources
 - [x] One-claim-per-beneficiary and release-only-after-expiry logic
 - [x] Fake-runtime tests exercise financial, expiry, validator, URL and state boundaries (22 cases pass on 2026-10-13)
-- [x] Native Direct Mode smoke tests are added for persistent storage, enrollment freeze and exact payable funding
+- [x] Native Direct Mode tests are added for persistent storage, enrollment freeze, exact payable funding, web rendering mocks and validator dissent
 - [ ] GenVM SDK semantic validation and typecheck on the SDK pinned by the contract dependency header
 - [ ] Direct Mode tests executed successfully against the pinned GenVM artifact
 - [ ] Studio integration tests for autonomous web rendering, leader/validator divergence and consensus timeout

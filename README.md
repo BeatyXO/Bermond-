@@ -15,7 +15,7 @@ When a service provider changes an API quota, data retention term, refund right 
 ```text
 contracts/bermond.py               One standalone GenLayer Intelligent Contract
 tests/test_contract.py             Lightweight contract-state tests with mocked GenLayer runtime
-tests/test_direct_mode.py          Native GenLayer Direct Mode persistence/funding smoke tests
+tests/test_direct_mode.py          Native GenLayer Direct Mode storage, funding, web and validator tests
 tests/conftest.py                  Isolated GenLayer test double
 frontend/src/main.tsx             React UI: marketing, proof lab, registry, create, detail/actions
 frontend/src/styles.css            Original black/yellow Comic Sans design

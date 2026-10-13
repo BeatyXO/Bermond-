@@ -28,13 +28,13 @@
     },
     {
       "path": "docs/ACCEPTANCE.md",
-      "size": 3657,
-      "sha256": "4a7c686e122f30b7624e6442ff16604f8bb4b14511a509aae23ad7788b34e5ee"
+      "size": 3691,
+      "sha256": "da506e148f462869bed8b0d803e96e1d62f40d2a9f92deb0d22190c390ce4662"
     },
     {
       "path": "docs/HANDOFF.md",
-      "size": 2472,
-      "sha256": "a319831af75ffac3e1aa24c8835258b92b9832a754c6c1e376de3a9eb6e62155"
+      "size": 2504,
+      "sha256": "0b6ce0ef86600d735b559fdf405ff30c449056f96853328992e4c902c30abc20"
     },
     {
       "path": "docs/PROTOCOL.md",
@@ -113,8 +113,8 @@
     },
     {
       "path": "README.md",
-      "size": 7378,
-      "sha256": "3fcd31545ca12789c47215883199c7b0728f614362b0151e352a0c539ec22be7"
+      "size": 7388,
+      "sha256": "77a4e2ecc00acbd9b42c21f17490867fd0ae97660e08701b21dc169d42c229d8"
     },
     {
       "path": "requirements-dev.txt",
@@ -133,8 +133,8 @@
     },
     {
       "path": "tests/test_direct_mode.py",
-      "size": 2645,
-      "sha256": "413992ae18291b41380e231ea9121f2827728cbcf5b8533ad5ee0c079ff5907a"
+      "size": 5058,
+      "sha256": "2293de3d39b058b2bbccb690e371cf2badf4fda18fa76d7feb8a62cdd99eaa99"
     }
   ]
 }
