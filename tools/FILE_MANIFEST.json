@@ -1,90 +1,95 @@
 {
-  "status": "locally built; Studio-dev and frontend build not yet verified",
+  "status": "Extracted workspace manifest. Each listed file is hashed; generated dependencies, build output and this manifest are excluded.",
   "files": [
     {
       "path": ".github/workflows/ci.yml",
-      "size": 1003,
-      "sha256": "92808456446ceba64889214bd7e1b92fcc29ca19189ebfce4175c06b2db960aa"
+      "size": 1137,
+      "sha256": "cebc94d7729bca8ff70b3756ea6e71b4be84d518c8edf9b409af5801f6cbffbb"
     },
     {
       "path": ".gitignore",
-      "size": 90,
-      "sha256": "8e7fe24ed86edc1e115f6b2b89b6ef5a7bbb6d9534bfa160b3e488b7c4c50a27"
+      "size": 101,
+      "sha256": "2f2408d653d35b46c12c7183db33151fe37f073fe576bc9c8ba43bf24106b0c8"
     },
     {
       "path": "CODEX_FINISH_PROMPT.md",
-      "size": 7515,
-      "sha256": "6b153ced976e97e5fa3e5a4e86baa4ec561fd3aefac5a83f342d130cfdc75bae"
-    },
-    {
-      "path": "README.md",
-      "size": 6464,
-      "sha256": "1608fff0b8c38b1926c632d3cb3db110367aa78f5020549a85b4703ed7cc4dc5"
+      "size": 7514,
+      "sha256": "0d1f3531132f4d20018ca2981bef5028f25c0b6e08e63789054ae0f47c29366e"
     },
     {
       "path": "contracts/bermond.py",
-      "size": 17857,
-      "sha256": "a644241e5bf9e28fadc05e5cca826e3ac76c8472e342598c4561ad84b9544ba3"
+      "size": 17856,
+      "sha256": "fa7ea686c9e0e58d3102e0bce6cdaf7b686e9d51cecf69b43b07200586029220"
+    },
+    {
+      "path": "deployments/studio-dev.json",
+      "size": 1560,
+      "sha256": "f6d06b6859bb42ef23b80635ab3194e2bb2494f5c61204b6b8e8a5db7903ed57"
     },
     {
       "path": "docs/ACCEPTANCE.md",
-      "size": 2238,
-      "sha256": "e4cfd5d7317739e78a408410b38a7d7bea2c20a2d9d28d40fa02a978a56f0846"
+      "size": 3657,
+      "sha256": "4a7c686e122f30b7624e6442ff16604f8bb4b14511a509aae23ad7788b34e5ee"
     },
     {
       "path": "docs/HANDOFF.md",
-      "size": 2084,
-      "sha256": "b73251f88adf20f00905274db085b04cbe3630dae026e7ce0553c13ee614d6b2"
+      "size": 2472,
+      "sha256": "a319831af75ffac3e1aa24c8835258b92b9832a754c6c1e376de3a9eb6e62155"
     },
     {
       "path": "docs/PROTOCOL.md",
-      "size": 4610,
-      "sha256": "dd602e665476c2eedb6ae81f8b0a8ebcfdce62ca91cc1121d845987691e8dfb6"
+      "size": 4609,
+      "sha256": "5dc141a889da1d5715a225e816a2aabc426fe163e7cc5eb0f351783f8a49e91c"
     },
     {
       "path": "docs/THREAT_MODEL.md",
-      "size": 2929,
-      "sha256": "815e7b8dd107f8a2cef1ca13ce69db0ff7b216ba70d97ee6ce693e484e7b94c5"
+      "size": 2928,
+      "sha256": "1bab291c89f82b4da69f544a2ee63adceb6af557360fd908d79899596398492e"
     },
     {
       "path": "frontend/.env.example",
-      "size": 138,
-      "sha256": "3090043102cc73533e88e9760849cab70d862dc274c72531833978f6dd54b79c"
+      "size": 137,
+      "sha256": "2ee9a30f18769a23d4697347b2e347a4d74e7758183cc8e4b4c74f3d8db7f0ad"
     },
     {
       "path": "frontend/index.html",
-      "size": 472,
-      "sha256": "3e67cb80b570b58eccbdcb9f5a9d3b753604d0b37fed647d82724c42fb6ff3d9"
+      "size": 471,
+      "sha256": "35408a54ba5c0393a62146f38dd8853258cbf832bc4b0c8d2c351760a38604ff"
+    },
+    {
+      "path": "frontend/package-lock.json",
+      "size": 113110,
+      "sha256": "ffcfa408c43ae5c558a81d024337bad4d47768de5f6a30a0f4ee89fedae89fad"
     },
     {
       "path": "frontend/package.json",
-      "size": 567,
-      "sha256": "66afcb954db716ec09255a188248fb2fddc9699cc16532efd95064d67669bc35"
+      "size": 566,
+      "sha256": "446fc8c29598b73e5a622b305c2ff85af4a32b75d6a6879eec0299cf4a61ca2b"
     },
     {
       "path": "frontend/src/chain.ts",
-      "size": 3221,
-      "sha256": "21812b51bae838470acb3a9d3cd05496a5fae9566256b0d1eb95baaeccbad50f"
+      "size": 4578,
+      "sha256": "b67b8150b6806e4a2d97f43cf513445cfc0d008d699b05fdbb5a816ffb5d578b"
     },
     {
       "path": "frontend/src/fixtures.ts",
-      "size": 3598,
-      "sha256": "4d15d6100ff563225a03ac83b6089aecea8e3b7e9939328a40bd177844fb7da3"
+      "size": 3597,
+      "sha256": "5c3bec8a68e2749f0f6c4bfa157130046f476f543a8d2db3720a705d1d70fae5"
     },
     {
       "path": "frontend/src/main.tsx",
-      "size": 34558,
-      "sha256": "a8062da1988b001cdbef6043d4e5531d104e232dbc6bd8169cd7c38b73ce5b27"
+      "size": 35671,
+      "sha256": "ae68a39e34930c18573cf0030a3941aa929a93758c42a6db753fed35c3667653"
     },
     {
       "path": "frontend/src/protocol.ts",
-      "size": 2417,
-      "sha256": "ca3d2cc553d63f16f79e8c21c64fc4abfc4b6d03c4e41833ae34ba6b4eec6554"
+      "size": 2416,
+      "sha256": "e9c3ca0cb210fb4f5b4d0af9dd1fbb06e5cf1ccc799a347fef8906a1f6fa3bf3"
     },
     {
       "path": "frontend/src/styles.css",
-      "size": 30122,
-      "sha256": "83538905e106533ec638dd498b5ee205df2ae238729eb4eefb622772ffb94828"
+      "size": 30717,
+      "sha256": "fd4236b85bc7a2e42393d7d939f827b438b31d7848fb8ec4fdd8963c138a10ee"
     },
     {
       "path": "frontend/tests/protocol.test.mjs",
@@ -93,28 +98,43 @@
     },
     {
       "path": "frontend/tsconfig.json",
-      "size": 456,
-      "sha256": "f208dd4d3fb81483ffed1fea450f7a8be89eabbb5c2eaa12e4f2c23ee1c1998f"
+      "size": 455,
+      "sha256": "e93d9914bcab01b5e1d183ad87b77ad112d72d29c7ef864c73657d699f34009d"
     },
     {
       "path": "frontend/vercel.json",
-      "size": 62,
-      "sha256": "1abbc0baf6a050b3c703dc05e873776d44ee0bfcbb1117036df26acfa455c29a"
+      "size": 61,
+      "sha256": "969331b09ff030aeed5964d515f9003c300aa48cfbfc9a79ebf4c568f77e5d1e"
     },
     {
       "path": "frontend/vite.config.ts",
-      "size": 154,
-      "sha256": "5d84267dfa73186f4c5ca9973da33ad1d75e45b3a155e1e69f9c2e4450e19b31"
+      "size": 153,
+      "sha256": "b180071c0e118ab9135f84a36beec5a4cb9b93d6fd8663ccb5ec43a60a90ef63"
+    },
+    {
+      "path": "README.md",
+      "size": 7378,
+      "sha256": "3fcd31545ca12789c47215883199c7b0728f614362b0151e352a0c539ec22be7"
+    },
+    {
+      "path": "requirements-dev.txt",
+      "size": 57,
+      "sha256": "d15ac6c8804447c9a6f7a5848459d736c7ad58a40fb51ea89118e4e7afb6b3dc"
     },
     {
       "path": "tests/conftest.py",
-      "size": 2768,
-      "sha256": "c1e9d0a7c998ac483811e3270c60cfbbc22b567ad0f627add54fc174fd10394e"
+      "size": 2775,
+      "sha256": "82f72310397dd1080a0ef58ec1bdb8d14c688f0f90689f5bc97942cb24caa6ec"
     },
     {
       "path": "tests/test_contract.py",
-      "size": 7099,
-      "sha256": "6bbe7eb972790b23c2cf819212eb1e319305b408f9b24bc5d77218d997e05cf5"
+      "size": 8670,
+      "sha256": "ec499e4c8160cb15e62a0ee247d5e1eebf56a35c2891cd3e0661a52830ffd304"
+    },
+    {
+      "path": "tests/test_direct_mode.py",
+      "size": 2645,
+      "sha256": "413992ae18291b41380e231ea9121f2827728cbcf5b8533ad5ee0c079ff5907a"
     }
   ]
 }

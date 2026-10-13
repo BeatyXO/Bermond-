@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "network": {
+    "name": "GenLayer Studio development preview",
+    "chain_id": 61997,
+    "rpc": "https://studio-dev.genlayer.com/api",
+    "explorer": "https://explorer-studio-dev.genlayer.com",
+    "source": "https://docs.genlayer.com/developers/networks"
+  },
+  "status": "PENDING_NO_DEPLOYMENT",
+  "contract_address": null,
+  "contract_dependency": "py-genlayer:5jycge4q8k23462jtb0b9fyey1s9qz928sz2nbrd9mg4sxqg2qng",
+  "frontend_sdk": "genlayer-js@2.0.0-rc.1",
+  "release_source_sha256": "fa7ea686c9e0e58d3102e0bce6cdaf7b686e9d51cecf69b43b07200586029220",
+  "deployment_transaction": null,
+  "schema": null,
+  "code_parity": "UNVERIFIED",
+  "receipt_finality": "UNVERIFIED",
+  "blocker": "No Studio deployment credentials or authoritative deployment receipt were available in this workspace.",
+  "studio_transfer_note": "Studio documents that @gl.evm.contract_interface calls to EOAs are not implemented; external GEN payout settlement requires a supporting network.",
+  "cases": [
+    {
+      "expected": "COMPLIANT",
+      "id": "northstar-data",
+      "receipts": [],
+      "state": "preview_only"
+    },
+    {
+      "expected": "BREACHED",
+      "id": "orion-api",
+      "receipts": [],
+      "state": "preview_only"
+    },
+    {
+      "expected": "UNRESOLVED",
+      "id": "halo-compute",
+      "receipts": [],
+      "state": "preview_only"
+    },
+    {
+      "expected": "COMPLIANT",
+      "id": "atlas-privacy",
+      "receipts": [],
+      "state": "preview_only"
+    }
+  ]
+}

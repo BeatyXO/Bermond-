@@ -15,6 +15,7 @@ When a service provider changes an API quota, data retention term, refund right 
 ```text
 contracts/bermond.py               One standalone GenLayer Intelligent Contract
 tests/test_contract.py             Lightweight contract-state tests with mocked GenLayer runtime
+tests/test_direct_mode.py          Native GenLayer Direct Mode persistence/funding smoke tests
 tests/conftest.py                  Isolated GenLayer test double
 frontend/src/main.tsx             React UI: marketing, proof lab, registry, create, detail/actions
 frontend/src/styles.css            Original black/yellow Comic Sans design
@@ -52,7 +53,7 @@ npm test
 npm run dev
 ```
 
-The Python tests use fake GenLayer infrastructure. They are **not** Studio Direct Mode, full GenVM, real validator consensus or a security audit. The CI workflow additionally runs the frontend build when the dependencies can be installed. The frontend currently targets `genlayer-js@2.0.0-rc.1` and Studio Dev (chain 61997), both subject to verification on the selected Studio release.
+`tests/test_contract.py` uses fake GenLayer infrastructure; it does not prove GenVM behavior. `tests/test_direct_mode.py` uses the `genlayer-test` Direct Mode fixtures and the SDK identified by the contract's `Depends` header. Studio consensus and network-finalized receipts remain separate launch gates. Install the pinned Python tools with `python -m pip install -r requirements-dev.txt`. CI installs those tools and runs `genvm-lint check` plus the complete pytest suite. The frontend targets `genlayer-js@2.0.0-rc.1` and the Studio development preview (chain 61997).
 
 ### Frontend environments
 
@@ -65,7 +66,9 @@ With no contract address, the product intentionally disables all onchain writes 
 
 ### GEN transfer and finality
 
-`fund_bond` is the only payable method. The JS adapter estimates protocol fees separately from its actual GEN deposit and waits for finalized successful execution before showing a transaction as complete. **Never retry a write blindly if a hash was returned.** Transfers are emitted at finalization, after internal claim state has been written.
+`fund_bond` is the only payable method. The JS adapter estimates protocol fees separately from its GEN deposit and waits for finalized successful execution before showing a transaction as complete. Once a write returns a hash, the app stores it before waiting and offers a finality-resume action after a timeout or reload; it blocks another write until the pending receipt is checked. Transfers are emitted at finalization, after internal claim state has been written.
+
+Studio supports consensus and simulated native transfers, but does not implement `@gl.evm.contract_interface` calls to EOAs. A Studio run can validate contract decisions and message construction; it cannot prove that the external GEN transfer child transaction paid its recipient. Verify transfer settlement on a network that supports those external messages before enabling real-value use. See [`deployments/studio-dev.json`](deployments/studio-dev.json) for the pending, explicitly unproven release record.
 
 ## Source and release honesty
 

@@ -7,7 +7,7 @@ import pytest
 from pathlib import Path
 from datetime import datetime, timezone
 
-ADDRS = ['0x' + str(k) * 40 for k in range(1, 6)]
+ADDRS = ['0x' + format(k, '040x') for k in range(1, 15)]
 
 class Revert(Exception):
     pass

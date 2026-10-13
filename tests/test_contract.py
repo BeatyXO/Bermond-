@@ -15,20 +15,52 @@ def answer(statuses=None, **kw):
     return {'criteria': [{'dimension': d, 'status': s, 'witness': 'both', 'fact': 'Policy comparison based on both committed sources.'} for d, s in zip(DIMENSIONS, statuses)], 'reasoning': 'Independent semantic classification.' , **kw}
 
 
-def create(env, subscribers=2, payout=1000):
+def create(env, subscribers=2, payout=1000, bond_id='bond-123'):
     mod, gl = env.mod, env.gl
     bond = mod.Bermond()
     terms = {d: 'Protect ' + d for d in DIMENSIONS}
-    bond.create_bond('bond-123', 'Orion Cloud', 'API', B_URL, hashlib.sha256(BASE.encode()).hexdigest(), L_URL,
+    bond.create_bond(bond_id, 'Orion Cloud', 'API', B_URL, hashlib.sha256(BASE.encode()).hexdigest(), L_URL,
         json.dumps(terms), payout, env.time['now'] + 10_000, env.time['now'] + 20_000)
     for address in ADDRS[1:1 + subscribers]:
-        bond.enroll_subscriber('bond-123', address)
+        bond.enroll_subscriber(bond_id, address)
     gl.message.value = payout * subscribers
-    bond.fund_bond('bond-123')
+    bond.fund_bond(bond_id)
     gl.message.value = 0
     env.provider.body_by_url = {B_URL: BASE, L_URL: CURRENT}
     env.provider.answer = answer()
     return bond
+
+
+def test_multiple_bonds_keep_reserves_and_claims_independent(env):
+    first = create(env, subscribers=2, payout=1000, bond_id='bond-one')
+    terms = {d: 'Protect ' + d for d in DIMENSIONS}
+    first.create_bond('bond-two', 'Orion Cloud', 'API', B_URL, hashlib.sha256(BASE.encode()).hexdigest(), L_URL,
+        json.dumps(terms), 250, env.time['now'] + 10_000, env.time['now'] + 20_000)
+    for address in ADDRS[1:4]:
+        first.enroll_subscriber('bond-two', address)
+    env.gl.message.value = 750
+    first.fund_bond('bond-two')
+    second = first
+    env.provider.answer = answer(['BREACHED', 'UNCHANGED', 'UNCHANGED', 'UNCHANGED'])
+    first.check_policy('bond-one')
+    second.check_policy('bond-two')
+    env.gl.message.sender_address = ADDRS[1]
+    first.claim_compensation('bond-one')
+    assert first.get_bond('bond-one')['reserved_wei'] == 1000
+    assert second.get_bond('bond-two')['reserved_wei'] == 750
+    assert first.get_bond_ids() == ['bond-one', 'bond-two']
+    assert env.transfers == [(ADDRS[1], 1000)]
+
+
+def test_subscriber_capacity_is_twelve(env):
+    bond = env.mod.Bermond()
+    terms = {d: 'Protect ' + d for d in DIMENSIONS}
+    bond.create_bond('bond-capacity', 'Orion', 'API', B_URL, hashlib.sha256(BASE.encode()).hexdigest(), L_URL,
+        json.dumps(terms), 1000, env.time['now'] + 10_000, env.time['now'] + 20_000)
+    for address in ADDRS[1:13]:
+        bond.enroll_subscriber('bond-capacity', address)
+    with pytest.raises(Revert, match='capacity reached'):
+        bond.enroll_subscriber('bond-capacity', ADDRS[13])
 
 
 def test_exact_collateral_and_enrollment_freeze(env):
