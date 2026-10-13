@@ -1,0 +1,120 @@
+{
+  "status": "locally built; Studio-dev and frontend build not yet verified",
+  "files": [
+    {
+      "path": ".github/workflows/ci.yml",
+      "size": 1003,
+      "sha256": "92808456446ceba64889214bd7e1b92fcc29ca19189ebfce4175c06b2db960aa"
+    },
+    {
+      "path": ".gitignore",
+      "size": 90,
+      "sha256": "8e7fe24ed86edc1e115f6b2b89b6ef5a7bbb6d9534bfa160b3e488b7c4c50a27"
+    },
+    {
+      "path": "CODEX_FINISH_PROMPT.md",
+      "size": 7515,
+      "sha256": "6b153ced976e97e5fa3e5a4e86baa4ec561fd3aefac5a83f342d130cfdc75bae"
+    },
+    {
+      "path": "README.md",
+      "size": 6464,
+      "sha256": "1608fff0b8c38b1926c632d3cb3db110367aa78f5020549a85b4703ed7cc4dc5"
+    },
+    {
+      "path": "contracts/bermond.py",
+      "size": 17857,
+      "sha256": "a644241e5bf9e28fadc05e5cca826e3ac76c8472e342598c4561ad84b9544ba3"
+    },
+    {
+      "path": "docs/ACCEPTANCE.md",
+      "size": 2238,
+      "sha256": "e4cfd5d7317739e78a408410b38a7d7bea2c20a2d9d28d40fa02a978a56f0846"
+    },
+    {
+      "path": "docs/HANDOFF.md",
+      "size": 2084,
+      "sha256": "b73251f88adf20f00905274db085b04cbe3630dae026e7ce0553c13ee614d6b2"
+    },
+    {
+      "path": "docs/PROTOCOL.md",
+      "size": 4610,
+      "sha256": "dd602e665476c2eedb6ae81f8b0a8ebcfdce62ca91cc1121d845987691e8dfb6"
+    },
+    {
+      "path": "docs/THREAT_MODEL.md",
+      "size": 2929,
+      "sha256": "815e7b8dd107f8a2cef1ca13ce69db0ff7b216ba70d97ee6ce693e484e7b94c5"
+    },
+    {
+      "path": "frontend/.env.example",
+      "size": 138,
+      "sha256": "3090043102cc73533e88e9760849cab70d862dc274c72531833978f6dd54b79c"
+    },
+    {
+      "path": "frontend/index.html",
+      "size": 472,
+      "sha256": "3e67cb80b570b58eccbdcb9f5a9d3b753604d0b37fed647d82724c42fb6ff3d9"
+    },
+    {
+      "path": "frontend/package.json",
+      "size": 567,
+      "sha256": "66afcb954db716ec09255a188248fb2fddc9699cc16532efd95064d67669bc35"
+    },
+    {
+      "path": "frontend/src/chain.ts",
+      "size": 3221,
+      "sha256": "21812b51bae838470acb3a9d3cd05496a5fae9566256b0d1eb95baaeccbad50f"
+    },
+    {
+      "path": "frontend/src/fixtures.ts",
+      "size": 3598,
+      "sha256": "4d15d6100ff563225a03ac83b6089aecea8e3b7e9939328a40bd177844fb7da3"
+    },
+    {
+      "path": "frontend/src/main.tsx",
+      "size": 34558,
+      "sha256": "a8062da1988b001cdbef6043d4e5531d104e232dbc6bd8169cd7c38b73ce5b27"
+    },
+    {
+      "path": "frontend/src/protocol.ts",
+      "size": 2417,
+      "sha256": "ca3d2cc553d63f16f79e8c21c64fc4abfc4b6d03c4e41833ae34ba6b4eec6554"
+    },
+    {
+      "path": "frontend/src/styles.css",
+      "size": 30122,
+      "sha256": "83538905e106533ec638dd498b5ee205df2ae238729eb4eefb622772ffb94828"
+    },
+    {
+      "path": "frontend/tests/protocol.test.mjs",
+      "size": 637,
+      "sha256": "a1be162da307cdd7219f7802509295ec30ac1775bec9eb98d14faa2c409c6a9c"
+    },
+    {
+      "path": "frontend/tsconfig.json",
+      "size": 456,
+      "sha256": "f208dd4d3fb81483ffed1fea450f7a8be89eabbb5c2eaa12e4f2c23ee1c1998f"
+    },
+    {
+      "path": "frontend/vercel.json",
+      "size": 62,
+      "sha256": "1abbc0baf6a050b3c703dc05e873776d44ee0bfcbb1117036df26acfa455c29a"
+    },
+    {
+      "path": "frontend/vite.config.ts",
+      "size": 154,
+      "sha256": "5d84267dfa73186f4c5ca9973da33ad1d75e45b3a155e1e69f9c2e4450e19b31"
+    },
+    {
+      "path": "tests/conftest.py",
+      "size": 2768,
+      "sha256": "c1e9d0a7c998ac483811e3270c60cfbbc22b567ad0f627add54fc174fd10394e"
+    },
+    {
+      "path": "tests/test_contract.py",
+      "size": 7099,
+      "sha256": "6bbe7eb972790b23c2cf819212eb1e319305b408f9b24bc5d77218d997e05cf5"
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "name":"bermond-policy-bonds",
+  "version":"0.1.0",
+  "private":true,
+  "type":"module",
+  "scripts":{"dev":"vite --host 0.0.0.0","build":"tsc -b && vite build","typecheck":"tsc -b --pretty false","test":"node --test tests/*.test.mjs","preview":"vite preview --host 0.0.0.0"},
+  "dependencies":{"genlayer-js":"2.0.0-rc.1","lucide-react":"^0.468.0","react":"^19.1.1","react-dom":"^19.1.1"},
+  "devDependencies":{"@types/node":"^22.10.2","@types/react":"^19.1.1","@types/react-dom":"^19.1.1","@vitejs/plugin-react":"^5.0.2","typescript":"^5.9.2","vite":"^7.1.5"}
+}
