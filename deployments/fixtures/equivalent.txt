@@ -1,0 +1,7 @@
+BERMOND PUBLIC TEST FIXTURE
+Service: Bermond Demo API
+Policy version: equivalent rewrite
+Allowance: No fewer than one hundred thousand API calls in any calendar month.
+Retention: Customer information is erased no later than thirty days after the service ends.
+Refunds: If monthly uptime falls under ninety-nine percent, the prepaid charge for that month is returned.
+Notice: Customers receive a minimum of thirty days' advance warning before a material reduction in service rights.

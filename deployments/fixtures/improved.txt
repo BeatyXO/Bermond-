@@ -1,0 +1,7 @@
+BERMOND PUBLIC TEST FIXTURE
+Service: Bermond Demo API
+Policy version: improved customer rights
+Allowance: At least 150000 API requests per calendar month.
+Retention: Delete customer data within 14 days after service ends.
+Refunds: Refund the affected month's prepaid fees when service availability is below 99.9%.
+Notice: Give customers at least 7 days' notice before a material reduction of service rights.

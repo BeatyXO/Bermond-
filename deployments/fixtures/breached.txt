@@ -1,0 +1,7 @@
+BERMOND PUBLIC TEST FIXTURE
+Service: Bermond Demo API
+Policy version: material breach
+Allowance: 10000 API requests per calendar month.
+Retention: Delete customer data within 30 days after service ends.
+Refunds: Refund the affected month's prepaid fees when service availability is below 99%.
+Notice: Give customers at least 30 days' notice before a material reduction of service rights.
