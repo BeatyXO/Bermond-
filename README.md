@@ -1,87 +1,55 @@
-# Bermond ✳
+# Bermond
 
-**Promises, with consequences.** A standalone GenLayer Intelligent Contract for bonding public service commitments and adjudicating material policy drift.
+Bermond is a GenLayer service-assurance protocol. A provider locks GEN collateral behind four frozen public commitments—allowance, retention, refunds, and notice. Registered beneficiaries accept the frozen fingerprint before funding. During coverage, anyone may ask independent validators to compare the committed and current policy evidence. The contract alone determines eligibility, fixed payouts, claim deadlines, and release rules.
 
-> **Build stage (2026-10-13):** source implementation + editorial frontend + deterministic local tests. **NOT DEPLOYED. NOT AUDITED.** No live transactions, onchain contract address or completed GenVM validation are claimed. The interactive proof lab uses clearly labeled illustrative fixtures.
+## Current status
 
-## Why this exists
+The repository contains a hardened contract candidate, its React/Vite frontend, reproducible fake-runtime and GenLayer Direct Mode tests, and deployment tooling. **The current candidate is not deployed.** It changes the contract schema and source, so it cannot be represented by the prior Studio deployment.
 
-When a service provider changes an API quota, data retention term, refund right or advance-notice commitment, simply diffing the words cannot determine whether the promise was broken. Bermond enables a provider to reserve **GEN collateral** behind four frozen policy rights. Independent GenLayer execution reads the archived baseline and the current published policy and classifies their **meaning**. The contract derives the verdict, controls who is eligible and allows each enrolled beneficiary at most one exact compensation claim.
+The preserved Studio Dev manifest records an earlier deployment at `0x8A5cb514A6b8Eae009cB896F0EcAC2F208d954F9` (chain ID `61997`), deployment transaction `0x0a37753101ddc15e274c3dbe0e744dc5c2138575dfb4006a21df43c1df82a8af`, and source SHA-256 `e1987c6d5b2cff228025e5be8d20d570cd436e05f797569b66020906f0cc1554`. Its claim and expiry-release transaction evidence remains in [`deployments/studio-dev.json`](deployments/studio-dev.json). Those receipts belong to the earlier source. They show finalized contract executions and emitted external-message records, not authoritative beneficiary balance changes.
 
-**Not MatchPay:** Bermond is continuous policy assurance rather than purchase-order / invoice / receipt reconciliation. Its innovations include changing-public-policy detection, explicit time-based coverage, predetermined multi-beneficiary reserves, subscriber freeze and a claim grace window. The visual experience is intentionally different: high-contrast black/yellow Comic Sans with illustrated policy tickets, clause-diff explorer and bond registry.
+The current Studio Dev `gen_call` read path returns the same SQLAlchemy rollback error for calls to two separate previously deployed contracts. The matching v0.6 documentation says external EOA value transfers execute at finalization, but does not document a callback or atomic rollback guarantee that Bermond can use to reconcile failed or ambiguous settlement. The candidate records such outbound amounts as `pending_wei`; it never labels them paid or released. The pinned `web.get` response does not expose an HTTP status in Direct Mode, and no final response origin/redirect check is demonstrated. No fresh deployment or state-changing lifecycle test is safe until the read/fee paths and transfer/evidence limitations are resolved.
 
-## Repo map
+## Contract lifecycle
 
-```text
-contracts/bermond.py               One standalone GenLayer Intelligent Contract
-tests/test_contract.py             Lightweight contract-state tests with mocked GenLayer runtime
-tests/test_direct_mode.py          Native GenLayer Direct Mode storage, funding, web and validator tests
-tests/conftest.py                  Isolated GenLayer test double
-frontend/src/main.tsx             React UI: marketing, proof lab, registry, create, detail/actions
-frontend/src/styles.css            Original black/yellow Comic Sans design
-frontend/src/chain.ts              GenLayerJS read/write, fee-estimate, finality handling
-frontend/src/fixtures.ts           Clearly labeled fictional proof-lab fixtures
-frontend/src/protocol.ts           Types, BigInt parsing, verdict helpers
-docs/PROTOCOL.md                   Protocol specification and state machine
-docs/THREAT_MODEL.md               Security boundaries and open issues
-docs/ACCEPTANCE.md                 Review-ready verification matrix
-docs/HANDOFF.md                    Explicit remaining steps
-CODEX_FINISH_PROMPT.md             Paste-ready autonomous coding agent brief
-.github/workflows/ci.yml           Python + frontend quality gates
-```
+1. The provider creates a bond with four bounded terms, a baseline URL and SHA-256, a provider-declared baseline document identity/publisher/version, current policy URL, fixed per-beneficiary payout, and coverage/claim deadlines.
+2. The provider enrolls beneficiaries while the bond is in `DRAFT`. Each enrolled beneficiary signs a transaction accepting the exact policy fingerprint. The first acceptance freezes the subscriber set. Funding requires every subscriber to accept.
+3. The provider funds exactly `payout × beneficiary count`. Each bond tracks its own reserve and accounting values.
+4. During coverage, anyone may call `check_policy`. This is permissionless but not autonomous monitoring: the chain does not fetch or inspect a policy until a transaction initiates a check.
+5. Independent GenVM execution compares source excerpts, source digests, source roles, normalized factual premises, and four dimension/status decisions. Ambiguous or unavailable evidence that reaches consensus is a non-paying `UNRESOLVED` result. Consensus failure is a failed/undecided transaction, not a stored `UNRESOLVED` result.
+6. An enrolled beneficiary can claim once after a finalized `BREACHED` result through the claim deadline. The contract reserves the fixed amount and records the outgoing transfer as pending. After the deadline, the provider can close the bond and emit a transfer for only the remaining reserve; that emitted amount also remains pending until independently reconciled.
 
-## Protocol
+The provider's declared baseline identity is bound to the bond fingerprint and beneficiary acceptance, but a digest and declaration do not prove publisher identity or historical policy authority. The contract records that limitation; it is a voluntary provider commitment, not centralized certification.
 
-1. Provider calls `create_bond`, committing the baseline HTTPS URL + mandatory SHA-256 digest, current policy URL, four protected clauses, exact per-beneficiary GEN amount, coverage end and claim deadline.
-2. Provider calls `enroll_subscriber` for up to 12 distinct eligible wallets while still in `DRAFT`.
-3. Provider calls payable `fund_bond` with **exactly** `(per_beneficiary_amount × beneficiary_count)` GEN. The subscriber set freezes and coverage becomes `ACTIVE`.
-4. Anyone calls `check_policy` during the coverage period. Leader and validators independently retrieve both sources. Every resolved clause must include a bounded exact excerpt and matching SHA-256 for each cited source; consensus compares the four statuses, witness sources, normalized excerpts, and full source digests. The contract derives `BREACHED` if any clause is breached, otherwise `UNRESOLVED` if any clause is unresolved, otherwise `COMPLIANT` (stored as `ACTIVE`).
-5. In `BREACHED`, each pre-enrolled beneficiary may call `claim_compensation` exactly once by the claim deadline. Contract code fixes the amount and claimant recipient.
-6. After the claim deadline the provider may call `release_collateral` to reclaim remaining funds and close the bond. A claimed amount cannot be reclaimed.
+## Test and build
 
-The LLM cannot choose a payment, set a beneficiary or change the collateral reserve. No administrator has emergency confiscation authority. **The baseline hash is provider-self-attested: it proves byte equality, not issuer authority or historical authenticity. The current policy publisher is also unauthenticated.** The contract and UI state these assurance limits; this release does not claim independent publisher or archive authentication.
-
-## Run locally
+Python checks use the pinned GenLayer v0.6 RC tool family. `genvm-lint check` runs the GenVM lint and SDK semantic validation stages. Direct Mode uses the official `genlayer-test` runner and a small helper that arranges the official downloaded runner artifacts in the supported `GENVM_PREBUILT_DIR` layout. Direct Mode tests execute the contract locally with GenVM; they do not represent live Studio consensus or live transfer settlement.
 
 ```bash
-python -m pytest -q tests
+python -m pip install -r requirements-dev.txt
+python -m py_compile contracts/bermond.py
+genvm-lint check contracts/bermond.py
+GENVM_VERSION=v0.6.0-rc5 GENVM_PREBUILT_DIR="$(python -m tools.prepare_genvm_prebuilt)" python -m pytest -q -p no:cacheprovider tests
+```
+
+The frontend remains the existing React/Vite application. It uses injected EIP-1193 wallets and `genlayer-js@2.0.0-rc.1` with the Studio Dev chain preset (61997). It does not use a wallet connection as transaction authorization: each write rechecks the active account and chain after fee estimation. Submitted writes persist until a final receipt is authoritative. A finalized claim/release contract execution is displayed separately from independent verification of the EOA transfer.
+
+```bash
 cd frontend
-npm install
+npm ci
 npm run typecheck
 npm run build
 npm test
-npm run dev
 ```
 
-`tests/test_contract.py` uses fake GenLayer infrastructure; it does not prove GenVM behavior. `tests/test_direct_mode.py` uses the `genlayer-test` Direct Mode fixtures and the SDK identified by the contract's `Depends` header. Studio consensus and network-finalized receipts remain separate launch gates. Install the pinned Python tools with `python -m pip install -r requirements-dev.txt`. CI installs those tools and runs `genvm-lint check` plus the complete pytest suite. The frontend targets `genlayer-js@2.0.0-rc.1` and the Studio development preview (chain 61997).
+For Vercel, set `VITE_BERMOND_CONTRACT_ADDRESS` only after deploying and verifying a fresh contract whose source hash matches this candidate. Keep it empty to show the review-mode interface without synthetic live registry state. The proof lab uses explicitly illustrative scenarios; `/app` reads only the configured contract.
 
-### Frontend environments
+## Remaining release blockers
 
-```bash
-cp frontend/.env.example frontend/.env
-# Leave VITE_BERMOND_CONTRACT_ADDRESS empty until deployment and live proofs succeed.
-```
+- The current candidate has no source-matched deployment, finalized new-schema lifecycle receipts, or authoritative live reads.
+- The network read endpoint needs recovery; the independent probes against both historical addresses currently fail identically.
+- The contract runtime's external EOA transfer settlement/rollback behavior needs an authoritative demonstration or supported reconciliation interface. Until then, amounts stay in `pending_wei`, and payout/release success must not be claimed.
+- The provider-declared policy baseline is not publisher-authenticated or historically proven; runtime URL redirect/final-origin guarantees are not established.
+- Permissionless checks still require a human or client to submit a transaction before coverage ends. Policy changes can go unnoticed.
 
-With no contract address, the product intentionally disables all onchain writes and displays a *review mode* instead of faking live state. `/proof` contains four labeled fictional scenarios so reviewers can understand the intended decisions without connecting a wallet. `/app` is a strictly chain-backed registry when configured.
-
-The current Studio Dev release is recorded in [`deployments/studio-dev.json`](deployments/studio-dev.json). Its finalized deployment at `0x8A5cb514A6b8Eae009cB896F0EcAC2F208d954F9` matches the local source byte-for-byte (SHA-256 `e1987c6d5b2cff228025e5be8d20d570cd436e05f797569b66020906f0cc1554`) and exposes the expected nine-method schema. A real two-wallet 1-GEN test bond finalized creation, enrollment, funding, policy check, and claim. The claim receipt includes a finalized 1-GEN transfer message to the beneficiary. Studio's `gen_call` and transaction-specific fee estimate still return a server-side SQLAlchemy transaction error; authoritative post-write contract reads are unavailable, although receipt status, code parity, schema, and transfer message were verified.
-
-The deployed contract hardening binds consensus findings to exact excerpts and full baseline/current SHA-256 digests. Contract/UI metadata identifies the baseline as provider-self-attested; publisher authentication and historical authenticity remain unverified. SDK semantic checks and Direct Mode tests pass using `tools/genvm_zip_compat.py`, a project-local adapter for the runner archive format and SDK APIs; it does not alter installed packages or production contract behavior.
-
-For Studio Dev scripts, create an isolated environment with `python -m venv .deploy-venv`, then install the matching RC with `.deploy-venv/Scripts/python.exe -m pip install -r requirements-studio-dev.txt`. Use `.deploy-venv/Scripts/python.exe tools/studio_dev_deploy.py --wallet-file <local-test-wallet-file>` to deploy. It reads the selected private key into memory without printing or saving it. `tools/verify_studio_dev.py` verifies the finalized receipt, code hash and schema. The two-wallet lifecycle runner is `tools/studio_dev_lifecycle.py`; it stops before submitting writes when the manifest already records an unresolved transaction.
-
-### GEN transfer and finality
-
-`fund_bond` is the only payable method. The JS adapter estimates protocol fees separately from its GEN deposit and waits for finalized successful execution before showing a transaction as complete. Once a write returns a hash, the app stores it before waiting and offers a finality-resume action after a timeout or reload; it blocks another write until the pending receipt is checked. Transfers are emitted at finalization, after internal claim state has been written.
-
-The external EOA transfer uses `@gl.evm.contract_interface` and finalizes implicitly; it must not receive an `on` argument. Both the live claim and expiry release finalized successfully and emitted 1-GEN transfers to their expected recipients. The RPC read-call error and transaction evidence are recorded in [`deployments/studio-dev.json`](deployments/studio-dev.json).
-
-## Source and release honesty
-
-- This is still a development deployment, not a production launch. Studio's state-read RPC and pinned-runner validation remain outstanding; see the deployment manifest for exact evidence.
-- Document URL hashes attest content equality at render time, *not* source ownership or historical existence.
-- A service provider may control its current policy page; a neutral archived baseline with authenticated provenance is needed for stronger guarantees.
-- Consensus rejection may leave a transaction undecided rather than committing an `UNRESOLVED` state. Test this on the target network.
-- The live proof must use stable public evidence, finalized receipts and authoritative reads. See `docs/ACCEPTANCE.md`.
-
-Official references: [GenLayer storage](https://docs.genlayer.com/developers/intelligent-contracts/features/storage) · [GenLayer transaction timestamps](https://docs.genlayer.com/developers/intelligent-contracts/features/transaction-context) · [GenLayer value transfers](https://docs.genlayer.com/developers/intelligent-contracts/features/value-transfers) · [GenLayerJS writes](https://docs.genlayer.com/developers/decentralized-applications/writing-data).
+See [`docs/PROTOCOL.md`](docs/PROTOCOL.md), [`docs/THREAT_MODEL.md`](docs/THREAT_MODEL.md), [`docs/ACCEPTANCE.md`](docs/ACCEPTANCE.md), and the deployment evidence in [`deployments/studio-dev.json`](deployments/studio-dev.json).

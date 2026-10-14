@@ -14,6 +14,7 @@ from pathlib import Path
 from eth_account import Account
 from genlayer_py import create_client, studio_devnet
 from genlayer_py.assertions import tx_execution_succeeded
+from genlayer_py.types import TransactionHashVariant
 
 ROOT = Path(__file__).resolve().parents[1]
 CONTRACT = ROOT / "contracts" / "bermond.py"
@@ -30,6 +31,19 @@ def wallet_key(wallet_file: Path, label: str):
                 return Account.from_key(key)
             break
     raise ValueError(f"No valid wallet key found for label {label!r}.")
+
+
+def assert_read_service(client, account, address: str) -> None:
+    """Do not deploy a changed source while the target's finalized read path is unhealthy."""
+    result = client.read_contract(
+        address=address,
+        function_name="get_bond_ids",
+        args=[],
+        account=account,
+        transaction_hash_variant=TransactionHashVariant.LATEST_FINAL,
+    )
+    if not isinstance(result, list):
+        raise RuntimeError("Studio Dev finalized-state preflight returned an unexpected schema.")
 
 
 def main() -> int:
@@ -54,6 +68,16 @@ def main() -> int:
     else:
         if args.resume:
             raise RuntimeError("There is no pending deployment hash to resume.")
+        existing_address = manifest.get("contract_address")
+        if not existing_address:
+            raise RuntimeError("No preserved contract is available for the read-service preflight.")
+        try:
+            assert_read_service(client, account, existing_address)
+        except Exception as exc:
+            raise RuntimeError(
+                "Refusing to deploy: a finalized gen_call preflight against the preserved Studio Dev contract failed. "
+                "Restore authoritative reads before attempting a source-changing deployment."
+            ) from exc
         # Obtain the live v0.6 fee profile. Do not override its execution budget:
         # Studio Dev enforces the current runtime floor at submission.
         fees = client.estimate_transaction_fees()

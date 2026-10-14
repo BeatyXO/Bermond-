@@ -1,27 +1,26 @@
-# Bermond security and failure model
+# Bermond threat model
 
-| Threat | Implemented defense | Remaining exposure |
+| Threat | Implemented control | Remaining limitation |
 |---|---|---|
-| Prompt injection in policy text | Evidence is declared untrusted; each resolved clause must cite an exact bounded excerpt and matching source SHA-256; validators independently fetch and classify; contract controls all amounts and recipients | Model may still misclassify or validators may collude. Agreement reduces, but cannot eliminate, semantic error |
-| Baseline content replacement | Mandatory provider-self-attested SHA-256 commitment; validators re-fetch and verify exact source bytes; findings bind their excerpt to source digest | Hash alone does not establish issuer authority or historical existence. Both remain explicitly unverified |
-| Publisher and evidence provenance | Contract records the assurance level as provider self-attestation; UI states current publisher authentication and historical authenticity are unverified | No decentralized publisher-signature or trusted archive proof is available in this release; do not market the sources as authenticated |
-| Source unavailable | Deterministic `UNRESOLVED` assessment; cannot authorize payout | If unavailable to validators, consensus can fail before contract state commits |
-| Provider unilaterally removes subscribers | Subscribers only enrolled during `DRAFT`, frozen on exact funding | Provider chooses original beneficiaries; may register unrelated wallets |
-| Replay/double payout | `claimed` wallet list, state update before transfer, explicit reserve reduction | Verify native-transfer implementation on Studio and network |
-| Provider drains reserve while claims pending | No release until after frozen claim deadline | After deadline all unpaid claims expire |
-| Underfunded escrow | Exact payable amount required, reserve per bond | Audit global balance liabilities after fee accounting |
-| Unlimited input/CPU | Document, clause, ID, URL, bond and subscriber bounds | Need runtime gas and storage profiling |
-| Wrong chain/contract | Frontend Studio Dev pin + empty address fails closed | Verify deployment source hash, contract address, SDK version |
-| Rejected consensus | Validator agreement includes per-dimension status, witness source, exact normalized excerpt, and full SHA-256 of the cited baseline/current document; disagreement cannot authorize a breach | Real network may leave transaction undetermined; cannot force `UNRESOLVED` receipt. Studio's current read endpoint prevents independent verification of the finalized policy verdict |
-| Claim after coverage closes | Claim deadline enforced with transaction-pinned timestamp | Long delay, clock semantics on target GenVM need verification |
-| Arbitrary external links | Validated HTTPS URL and bounded fetch | DNS rebinding, redirects, web renderer trust require live tests |
+| Prompt injection in policy content | Evidence is treated as data; model prompt limits the four dimensions; exact baseline/current quotes and full hashes are checked; validators re-fetch and compare factual premises and evidence | Independent validators can still agree on a false semantic interpretation; no classifier makes this a legal finding |
+| Substituted or changed baseline | URL, digest, provider-declared document ID, publisher and version are bound to the bond fingerprint and accepted policy fingerprint; baseline bytes must match SHA-256 during checks | The provider can falsely declare publisher or version. Hash and declaration do not prove publisher identity, authority or historical publication |
+| Cross-bond evidence reuse | Each decision includes its bond ID, frozen terms, declared baseline identity and bond-specific source fingerprints; validator agreement binds source content and facts | Source URL can be reused by different bonds; it is not evidence of a publisher relationship |
+| Hostile URL, HTTP error, redirect or DNS change | HTTPS required; credentials, fragments, local/private hostnames and IP-like authorities are rejected; response size/UTF-8/hash bounded; non-2xx status is rejected when returned | Pinned Direct Mode `web.get` exposes no status to the contract mock, so 404/500 behavior is not demonstrated. No enforced final-origin/redirect check is documented; DNS rebinding and hostile redirects remain unresolved |
+| Evidence outage or validator disagreement | If independent execution reaches an agreed evidence/model failure, it stores `UNRESOLVED`; malformed responses are non-paying; consensus rejection propagates as a failed/undecided transaction | A consensus timeout does not create a stored result and may leave policy drift unchecked until coverage ends |
+| Malicious leader declares unsupported breach | Breach requires exact baseline and current witnesses; validators independently fetch, classify, validate source excerpts and compare normalized material facts as well as status | Validator diversity and misclassification rates are not independently measured here |
+| Provider enrolls an unintended beneficiary | Provider controls the enrollment set before funding; each beneficiary must sign acceptance of the exact frozen fingerprint; first acceptance freezes membership | Provider may choose any eligible wallet before acceptance and has no proof of a real-world service relationship |
+| Underfunded or cross-bond accounting | Exact payable funding; isolated per-bond reserves; bounds; invariant includes paid, released, reserved and pending transfers | Contract-held actual balance and aggregate solvency are not authoritatively readable in the current Studio RPC state |
+| Claim replay or unauthorized payout | Claim caller must be enrolled; a beneficiary can claim once; fixed amount and sticky breach; bond reserve reduced and claimant recorded before message emission | External GEN transfer finality/rollback and resulting EOA balance are not verified on the target deployment |
+| Ambiguous outgoing payment | Claim and release amounts enter `pending_wei`, not paid/released; no automatic retry or admin override exists | No authoritative reconciliation callback is available. Pending liabilities can remain unresolved indefinitely; this blocks production use |
+| Early provider withdrawal | Release is provider-only and strictly after the claim deadline; state closes before emitting release message | Real target runtime deadline and external settlement have not been revalidated for the current source |
+| Wallet account/network changes | Injected provider only; explicit connect/disconnect; disconnected state survives refresh; account and Studio Dev chain are re-read before and after fee simulation; writes block on pending transaction | UI cannot prove a wallet's prompt content; user must inspect and approve each signed transaction |
+| Stale or fake frontend state | Registry reads `LATEST_FINAL`; failures clear bond detail and hide actions; fixtures are confined to a labeled proof lab | Studio Dev `gen_call` is failing across two contracts, so action eligibility and current bond state cannot currently be validated live |
 
-## Launch blocking items
+## Current release blockers
 
-1. Run `genvm-lint check`, `validate`, `schema`, `typecheck` against the actual deployed SDK/GenVM runtime. Fix type/import/decorator discrepancies; no mocks or compatibility tricks in production.
-2. Run native GenLayer Direct Mode and Studio integration tests for all state transitions, validator dissent, missing source, reentrancy risk, transfer finality, timestamp expiry and disputed decisions.
-3. Verify auth/provenance of the baseline archive independently of hash value. External HTTPS source does not equal issuer signature.
-4. Confirm numerical safety with 12 beneficiaries at maximum payout and fuzzing.
-5. Verify strict separation of preview fixtures from actual contract data, and all required wallet actions in public browser.
-6. Document real finalized receipt hashes and release a source-matched deployment manifest.
-7. Publish an explicit operational model for policy-check scheduling; onchain code does **not** autonomously execute itself.
+1. The candidate source differs from every preserved successful deployment. It has not been deployed, and no new source-code correspondence or finalized lifecycle evidence exists.
+2. `gen_call` returns the same SQLAlchemy “invalid transaction must be rolled back” error for `get_bond_ids` on two separate Studio Dev contracts. The release candidate must also pass live fee estimation before any new write is considered.
+3. Official GenLayer documentation describes finalized external messages to EOAs but does not establish rollback semantics or a state-verifiable settlement callback. `pending_wei` is conservative accounting, not a recovery mechanism.
+4. The provider-declared baseline is not publisher-authenticated or historically proven; web redirects and final origins are not controlled by a documented contract API.
+5. Policy changes are checked only when someone submits `check_policy`; there is no autonomous monitoring or keeper.
+6. Direct Mode is useful GenVM execution evidence, but it is not live validator consensus, target network finality, or proof of EOA balance movement.

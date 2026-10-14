@@ -1,9 +1,9 @@
 """Run one real Studio Dev Bermond bond cycle using two local test wallets.
 
 Keys are read into process memory only and are never printed or persisted.
-This test creates a 1-wei bond against the public pinned breached-policy
-fixture. Studio Dev does not support external EOA payouts, so the script
-records claim execution and stops short of claiming a settled GEN transfer.
+This test creates a small 1-GEN bond against the pinned public policy fixture.
+It records finalized receipts and never falls back to guessed fees if the
+network cannot estimate the requested transaction.
 """
 from __future__ import annotations
 
@@ -22,6 +22,7 @@ from genlayer_py.types import TransactionHashVariant
 
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = ROOT / "deployments" / "studio-dev.json"
+CONTRACT = ROOT / "contracts" / "bermond.py"
 FIXTURE_BASE = "https://raw.githubusercontent.com/BeatyXO/Bermond-/a9eab6aa2be30d81c8d296e38a9f8ef366f64761/deployments/fixtures"
 # Use a meaningful native transfer amount: tiny 1-wei transfers can behave
 # differently in chain-layer/Studio settlement than regular GEN payments.
@@ -51,20 +52,13 @@ def submit(client, account, address: str, function: str, args: list, value: int 
     manifest = read_manifest()
     if manifest.get("pending_transaction"):
         raise RuntimeError("A prior transaction is pending; resume that hash before submitting another write.")
-    try:
-        fees = client.estimate_transaction_fees_for_write(
-            address=address,
-            function_name=function,
-            account=account,
-            args=args,
-            value=value,
-        )
-    except GenLayerError as exc:
-        # Studio Dev's transaction-specific simulation shares the unhealthy
-        # backend path used by gen_call. A static current fee-policy estimate
-        # still uses the supported fee-profile RPC and lets us test submission.
-        print(f"write_fee_simulation_unavailable={exc}", flush=True)
-        fees = client.estimate_transaction_fees()
+    fees = client.estimate_transaction_fees_for_write(
+        address=address,
+        function_name=function,
+        account=account,
+        args=args,
+        value=value,
+    )
     tx_hash = client.write_contract(
         address=address,
         function_name=function,
@@ -128,6 +122,12 @@ def main() -> int:
     address = manifest.get("contract_address")
     if not address or manifest.get("status") not in ("DEPLOYED_UNVERIFIED", "DEPLOYED_VERIFIED"):
         raise RuntimeError("No verified successful Studio Dev deployment is configured.")
+    working_source_hash = hashlib.sha256(CONTRACT.read_bytes()).hexdigest()
+    if working_source_hash != manifest.get("release_source_sha256"):
+        raise RuntimeError(
+            "The current contract source does not match the recorded deployment. "
+            "Refusing lifecycle writes to an older Studio Dev schema. Deploy and verify the candidate first."
+        )
     if manifest.get("pending_transaction") and not args.resume:
         raise RuntimeError("A pending transaction is recorded; resume it before starting a new bond.")
 
@@ -186,6 +186,11 @@ def main() -> int:
         bond_id = args.resume_case
         if "enroll_subscriber" not in successful:
             submit(client, provider, address, "enroll_subscriber", [bond_id, case["beneficiary"]])
+        if "accept_bond" not in successful:
+            fingerprint = case.get("policy_fingerprint")
+            if not fingerprint:
+                raise RuntimeError("The committed policy fingerprint is missing; refusing to fund an unverifiable beneficiary acceptance.")
+            submit(client, beneficiary, address, "accept_bond", [bond_id, fingerprint])
         if "fund_bond" not in successful:
             submit(client, provider, address, "fund_bond", [bond_id], int(case["payout_wei"]))
         if "check_policy" not in successful:
@@ -234,6 +239,20 @@ def main() -> int:
         "refunds": "Refund affected monthly prepaid fees below 99% availability.",
         "notice": "Give at least 30 days notice before materially reducing service rights.",
     }
+    baseline_identity = {
+        "document_id": "bermond-fixture-baseline-v1",
+        "publisher": "Bermond Studio Dev test fixture",
+        "version": "fixture-v1",
+    }
+    policy_payload = [
+        provider.address.lower(), bond_id, baseline_identity,
+        f"{FIXTURE_BASE}/baseline.txt", baseline_hash,
+        f"{FIXTURE_BASE}/breached.txt", terms, PAYOUT_WEI,
+        coverage_ends, claim_deadline,
+    ]
+    policy_fingerprint = hashlib.sha256(
+        b"BERMOND-POLICY-V2|" + json.dumps(policy_payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode("utf-8")
+    ).hexdigest()
     manifest.setdefault("live_cases", []).append(
         {
             "id": bond_id,
@@ -243,6 +262,8 @@ def main() -> int:
             "provider": provider.address,
             "beneficiary": beneficiary.address,
             "payout_wei": PAYOUT_WEI,
+            "policy_fingerprint": policy_fingerprint,
+            "baseline_identity": baseline_identity,
             "receipts": [],
         }
     )
@@ -254,6 +275,9 @@ def main() -> int:
         "API",
         f"{FIXTURE_BASE}/baseline.txt",
         baseline_hash,
+        baseline_identity["document_id"],
+        baseline_identity["publisher"],
+        baseline_identity["version"],
         f"{FIXTURE_BASE}/breached.txt",
         json.dumps(terms, separators=(",", ":")),
         PAYOUT_WEI,
@@ -263,6 +287,7 @@ def main() -> int:
     receipts = []
     receipts.append(submit(client, provider, address, "create_bond", call_args))
     receipts.append(submit(client, provider, address, "enroll_subscriber", [bond_id, beneficiary.address]))
+    receipts.append(submit(client, beneficiary, address, "accept_bond", [bond_id, policy_fingerprint]))
     receipts.append(submit(client, provider, address, "fund_bond", [bond_id], PAYOUT_WEI))
     if args.release_test:
         manifest = read_manifest()

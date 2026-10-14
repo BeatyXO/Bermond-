@@ -1,19 +1,88 @@
 """Contract-level lightweight fake GenLayer module, not a GenVM substitute."""
 from __future__ import annotations
 import importlib.util
+import json
 import sys
 import types
 import pytest
 from pathlib import Path
 from datetime import datetime, timezone
 
-# GenLayer's pinned Direct Mode loader currently only extracts nested TAR
-# runners, while the Studio Dev v0.6 release bundles the same runners as ZIPs.
-# Patch the loader in-process so Direct Mode exercises the pinned SDK instead
-# of failing before contract import. The installed package itself is untouched.
-from tools.genvm_zip_compat import _install_for_direct_mode
+# GenLayer v0.6 exec_prompt(response_format="json") decodes a JSON string;
+# Direct Mode's mock helper returns an already-parsed Python object. Adapt that
+# mock response to the documented SDK wire shape without replacing the runner.
+from gltest.direct import wasi_mock as _direct_wasi_mock
 
-_install_for_direct_mode()
+_original_direct_llm = _direct_wasi_mock._handle_llm_request
+
+def _direct_llm_json_wire(vm, data):
+    response = _original_direct_llm(vm, data)
+    if (
+        data.get('response_format') == 'json'
+        and isinstance(response, dict)
+        and isinstance(response.get('ok'), (dict, list))
+    ):
+        response = {**response, 'ok': json.dumps(response['ok'], separators=(',', ':'))}
+    return response
+
+_direct_wasi_mock._handle_llm_request = _direct_llm_json_wire
+
+# genlayer-test 0.30.0rc2 leaves fd 0 open on Windows while it immediately
+# unlinks the temporary message file. POSIX permits that unlink; Windows does
+# not. Defer only that cleanup until the official Direct Mode VM restores fd 0.
+if sys.platform == 'win32':
+    from gltest.direct import loader as _direct_loader
+    from gltest.direct.vm import VMContext as _VMContext
+
+    def _inject_message_windows(vm):
+        import os
+        import tempfile
+        from genlayer import calldata
+        from genlayer.types import Address
+
+        def address(value):
+            return Address(value) if isinstance(value, bytes) else value
+
+        message_data = {
+            'contract_address': address(vm._contract_address),
+            'sender_address': address(vm.sender),
+            'origin_address': address(vm.origin),
+            'stack': [],
+            'value': vm._value,
+            'datetime': vm._datetime,
+            'is_init': False,
+            'chain_id': vm._chain_id,
+            'entry_kind': 0,
+            'entry_data': b'',
+            'entry_stage_data': None,
+        }
+        fd, path = tempfile.mkstemp()
+        try:
+            os.write(fd, calldata.encode(message_data))
+            os.lseek(fd, 0, os.SEEK_SET)
+            vm._original_stdin_fd = os.dup(0)
+            os.dup2(fd, 0)
+            vm._direct_message_path = path
+        except Exception:
+            os.close(fd)
+            os.unlink(path)
+            raise
+        else:
+            os.close(fd)
+
+    _direct_loader._inject_message_to_fd0 = _inject_message_windows
+    _original_direct_cleanup = _VMContext._cleanup_after_deactivate
+
+    def _cleanup_direct_message_windows(vm):
+        try:
+            _original_direct_cleanup(vm)
+        finally:
+            path = getattr(vm, '_direct_message_path', None)
+            if path:
+                Path(path).unlink(missing_ok=True)
+                vm._direct_message_path = None
+
+    _VMContext._cleanup_after_deactivate = _cleanup_direct_message_windows
 
 ADDRS = ['0x' + format(k, '040x') for k in range(1, 15)]
 
@@ -35,6 +104,7 @@ class Provider:
     def __init__(self):
         self.body_by_url = {}
         self.validator_body_by_url = {}
+        self.status_by_url = {}
         self.read_counts = {}
         self.answer = None
         self.validator_answer = None
@@ -44,7 +114,7 @@ class Provider:
         count = self.read_counts.get(url, 0)
         self.read_counts[url] = count + 1
         body = self.validator_body_by_url.get(url, self.body_by_url[url]) if count > 0 else self.body_by_url[url]
-        return types.SimpleNamespace(body=body.encode('utf-8'))
+        return types.SimpleNamespace(status_code=self.status_by_url.get(url, 200), body=body.encode('utf-8'))
     def exec_prompt(self, prompt, response_format='json'):
         assert response_format == 'json'
         return self.answer

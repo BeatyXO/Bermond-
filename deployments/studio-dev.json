@@ -7,7 +7,7 @@
     "explorer": "https://explorer-studio-dev.genlayer.com",
     "source": "https://docs.genlayer.com/developers/networks"
   },
-  "status": "DEPLOYED_VERIFIED",
+  "status": "HISTORICAL_DEPLOYMENT_SOURCE_OUTDATED",
   "contract_address": "0x8A5cb514A6b8Eae009cB896F0EcAC2F208d954F9",
   "contract_dependency": "py-genlayer:5jycge4q8k23462jtb0b9fyey1s9qz928sz2nbrd9mg4sxqg2qng",
   "frontend_sdk": "genlayer-js@2.0.0-rc.1",
@@ -185,10 +185,10 @@
       }
     }
   },
-  "code_parity": "EXACT_BYTES_MATCH",
+  "code_parity": "HISTORICAL_RELEASE_EXACT_MATCH_CURRENT_CANDIDATE_UNMATCHED",
   "receipt_finality": "FINALIZED_SUCCESS",
-  "blocker": "Studio Dev gen_call and transaction-specific fee estimate return a server-side SQLAlchemy transaction error, preventing independent post-write state reads. Finalized lifecycle transactions and transfer messages are recorded in receipts.",
-  "studio_transfer_note": "Studio documents that @gl.evm.contract_interface calls to EOAs are not implemented; external GEN payout settlement requires a supporting network.",
+  "blocker": "The current candidate is not deployed. Studio Dev get_bond_ids reads at LATEST_FINAL against two historical contracts return the same server-side SQLAlchemy rollback error; transaction-specific fee estimation is also unhealthy. No candidate deployment or lifecycle write was attempted.",
+  "studio_transfer_note": "Studio Dev documentation describes outgoing GEN value transfers to EOAs, and historical receipts contain outgoing message records. This does not establish recipient balance deltas or rollback/reconciliation semantics for the current candidate.",
   "cases": [
     {
       "expected": "COMPLIANT",
@@ -343,6 +343,7 @@
     }
   ],
   "verification": {
+    "scope": "HISTORICAL_RELEASE_AT_VERIFICATION_TIME",
     "chain_id": 61997,
     "deployment_status": {
       "status": "FINALIZED",
@@ -350,7 +351,8 @@
     },
     "local_source_sha256": "e1987c6d5b2cff228025e5be8d20d570cd436e05f797569b66020906f0cc1554",
     "deployed_source_sha256": "e1987c6d5b2cff228025e5be8d20d570cd436e05f797569b66020906f0cc1554",
-    "exact_bytes_match": true
+    "exact_bytes_match": true,
+    "current_candidate_source_sha256": "94f4c585126a8d99348ffcca478b8dd4a157aaf2ca93c84d6a8864585493ac5a"
   },
   "pending_transaction": null,
   "pending_deployment": null,
@@ -1708,6 +1710,26 @@
       "runtime_error": null
     }
   ],
-  "candidate_contract_source_sha256": "e1987c6d5b2cff228025e5be8d20d570cd436e05f797569b66020906f0cc1554",
-  "candidate_deployment_status": "DEPLOYED_VERIFIED"
+  "candidate_contract_source_sha256": "94f4c585126a8d99348ffcca478b8dd4a157aaf2ca93c84d6a8864585493ac5a",
+  "candidate_deployment_status": "NOT_DEPLOYED",
+  "candidate_schema": {
+    "method_count": 10,
+    "views": ["get_bond", "get_bond_ids", "get_claim_status"],
+    "writes": ["accept_bond", "check_policy", "claim_compensation", "create_bond", "enroll_subscriber", "fund_bond", "release_collateral"],
+    "source": "Local GenVM lint and SDK validation; no deployed schema receipt exists for this candidate."
+  },
+  "candidate_read_probe": {
+    "date": "2026-10-14",
+    "chain_id": 61997,
+    "rpc": "https://studio-dev.genlayer.com/api",
+    "function": "get_bond_ids",
+    "transaction_hash_variant": "LATEST_FINAL",
+    "addresses": [
+      "0x8A5cb514A6b8Eae009cB896F0EcAC2F208d954F9",
+      "0xd2E64c15268edE3EfA637DD09496beC9c9F795C3"
+    ],
+    "result": "ERROR",
+    "error": "Can't reconnect until invalid transaction is rolled back. Please rollback() fully before proceeding (Background on this error at: https://sqlalche.me/e/20/8s2b)",
+    "interpretation": "Same server-side error for both independent contract reads; does not by itself prove every Studio Dev RPC method is unavailable."
+  }
 }

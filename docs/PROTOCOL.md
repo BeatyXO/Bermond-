@@ -1,63 +1,68 @@
-# Bermond V1 protocol specification
+# Bermond protocol
 
-## Product boundary
+## Scope and trust
 
-Bermond is *a service assurance bond*, not an escrow marketplace, invoice reconciler or generalized Internet Court. Its primary actor is a provider that voluntarily puts financial collateral behind specifically frozen public service commitments. The consumer is a registered eligible beneficiary (including a software agent wallet). The protected artifact is a public service policy, not a delivery receipt.
+Bermond is a voluntary collateral commitment by a service provider. It protects exactly four provider-authored dimensions: allowance, retention, refunds, and notice. The contract freezes the terms and evidence references for each bond, limits model output to classifications and findings, and calculates all recipients, amounts, and deadlines deterministically.
 
-## Trust model
+The baseline is identified by a provider-supplied document ID, publisher name, policy version, URL, and SHA-256. These values are committed in the bond fingerprint and shown to beneficiaries before acceptance. They establish what the provider promised in this bond; they do not authenticate the publisher, prove the document was historically published, or establish the publisher's legal authority. Current policy URLs are unauthenticated too. No central certifier is introduced.
 
-- Provider chooses initial service, 4 frozen clauses, two canonical HTTPS URLs, baseline SHA256, per-subscriber payout and two deadlines.
-- Baseline must be independently accessible and hash-matching during adjudication. The baseline hash is set at creation; funding cannot alter it.
-- All source text, HTTPS content and prompted response fields are untrusted; URLs inside fetched documents are not followed.
-- LLM outputs classify four dimensions only: allowance, retention, refunds and notice. All money and state calculations are deterministic.
-- Provider selects subscribers *before funding*. A registered subscriber neither pays into nor guarantees the bond; enrolled wallets may collect one predetermined reward after accepted breach.
+All fetched content is untrusted data. Prompt instructions in a policy page are ignored. A resolved classification must cite exact bounded baseline and current excerpts whose full-document hashes match the independently fetched documents. Validator agreement binds the dimension, status, witness sources, normalized evidence quotations and digests, and normalized material factual premise. Style and punctuation in the fact summary do not affect the comparison. The model cannot create evidence, choose money, change state, or select a payment recipient.
 
 ## Lifecycle
 
 ```mermaid
 flowchart TD
-    D[DRAFT: frozen promise, editable subscriber set] -->|exact payable funding| A[ACTIVE]
-    A -->|compliant/improved observation| A
-    A -->|missing or ambiguous evidence| U[UNRESOLVED]
-    U -->|new valid observation| A
-    A -->|accepted material breach| B[BREACHED]
-    U -->|accepted material breach| B
-    B -->|per-enrolled-wallet claim, once| B
-    A -->|past claim deadline / provider release| C[CLOSED]
-    U -->|past claim deadline / provider release| C
-    B -->|past claim deadline / provider release| C
+    D[DRAFT: provider enrolls beneficiaries] -->|each beneficiary accepts fingerprint| F[DRAFT: membership frozen]
+    F -->|exact collateral after all accept| A[ACTIVE]
+    A -->|equivalent or improved policy| A
+    A -->|agreed ambiguity or unavailable evidence| U[UNRESOLVED]
+    A -->|agreed material breach| B[BREACHED]
+    U -->|later agreed classification| A
+    U -->|agreed material breach| B
+    B -->|beneficiary can claim once| B
+    A -->|provider closes after deadline| C[CLOSED]
+    U -->|provider closes after deadline| C[CLOSED]
+    B -->|provider closes after deadline| C[CLOSED]
 ```
 
-Every call to `check_policy` requires transaction time <= `coverage_ends`. The claim grace period is a later deadline, used for payout and returning unused funds. `BREACHED` is sticky; provider cannot use a subsequent benign policy revision to erase verified compensation rights. `CLOSED` cannot be paid or checked again.
+The provider may enroll beneficiaries only in `DRAFT`, before the first beneficiary accepts. Every enrolled beneficiary must accept the current fingerprint before funding. The first acceptance freezes membership. Funding must equal the fixed payout multiplied by the frozen beneficiary count.
 
-## State / ABI
+Anyone can submit `check_policy` during coverage while the bond is `ACTIVE` or `UNRESOLVED`. The contract does not monitor sources or schedule calls itself. A successfully finalized `UNRESOLVED` assessment is a stored non-paying result. A consensus transaction that fails or remains undecided is not an `UNRESOLVED` assessment and must not be presented as one.
 
-Public writes: `create_bond`, `enroll_subscriber`, `fund_bond` (payable), `check_policy`, `claim_compensation`, `release_collateral`.
+`BREACHED` is sticky. A later policy improvement cannot erase already acquired beneficiary claim rights. Claims are permitted through the inclusive claim deadline. Release requires a later transaction strictly after that deadline and is provider-only.
+
+## Public interface
+
+Writes: `create_bond`, `enroll_subscriber`, `accept_bond`, `fund_bond` (payable), `check_policy`, `claim_compensation`, `release_collateral`.
 
 Views: `get_bond`, `get_bond_ids`, `get_claim_status`.
 
-A `Bond` stores: provider, service name/category, source references, four clauses, policy fingerprint, payout_wei, coverage_ends, claim_deadline, subscriber list, claimed list, remaining reserve, creation time, last assessment, last fingerprint, total checks and status.
+The current candidate therefore has ten schema methods. Its required `py-genlayer` dependency remains pinned in the contract header. The older deployed source has a different, nine-method schema and does not implement beneficiary acceptance or pending-transfer accounting.
 
-## Financial invariants
+## Financial accounting
 
-1. Escrow amount equals `payout × frozen subscriber count` exactly. No partial funding.
-2. `claim_compensation` pays `payout` to the transaction caller *only if* enrolled, not yet claimed, breach accepted, and within the claim deadline.
-3. Claims update persistent state and decrease reserve **before** emitting a finalized native GEN transfer.
-4. `release_collateral` is callable only by provider after claim deadline; transfers exactly remaining reserve.
-5. `amount_claimed + amount_released + remaining_reserve = amount_funded` for each funded bond; no method can mint new reserve.
-6. Unknown or malformed model output cannot select compensation amounts or recipients.
+For each funded bond, the candidate asserts:
 
-## Equivalence
+```text
+funded_wei = paid_wei + released_wei + reserved_wei + pending_wei
+```
 
-Semantic classifications are normalized to ordered `(dimension, status)` pairs. Validator source evidence is independently fetched; the validator recomputes status and ignores harmless wording differences in prose or witness selection. Disagreement must not authorize compensation.
+`reserved_wei` is the remaining amount still available under the contract's claim/release rules. A claim decrements the reserve and records a one-shot claimant before emitting a fixed transfer to that claimant. A provider release zeros the remaining reserve and closes the bond before emitting the transfer. Those outgoing GEN messages are recorded in `pending_wei`; they are not counted as paid or released because the Intelligent Contract has no authoritative settlement result available during execution.
 
-## Limits and liveness
+There is no safe, documented standalone-contract reconciliation callback for an EOA transfer. The contract does not retry an ambiguous transfer or let an administrator mark it complete. Until GenLayer supplies an authoritative settlement guarantee or verifiable reconciliation path, `pending_wei` may remain unresolved indefinitely. This is a release blocker for production economic claims, not a guarantee that the beneficiary was paid.
 
-Max 120 bonds and 12 subscribers per bond; four fixed dimensions; source text max 32,000 characters per URL; a baseline hash is mandatory. Coverage must end between one hour and 366 days after creation. Claim grace window is between 1 second and 90 days after coverage. **These are source-level checks subject to GenVM verification, not an assertion of deployed enforcement.**
+Exact funding, per-bond reserves, caller authorization, one claim per enrolled beneficiary, closed-bond replay guards, fixed amounts, and deadline boundaries are enforced in contract code. Unit and Direct Mode checks cover these rules locally; live network behavior remains a separate gate.
 
-## Known V1 limitations
+## Constraints and liveness
 
-- A dishonest publisher could manipulate the current URL or make it unavailable to deny monitoring; publisher identity and independent archive attestations require further integration.
-- A breach must be discovered during coverage. Missing monitoring can lead to return of unused collateral after grace; do not market this as automatic monitoring.
-- No provider-imposed consent proof for enrollment; beneficiaries should verify their eligibility with wallet signature as a planned enhancement.
-- Direct Mode / Studio validation and a working onchain proof are mandatory before real-value usage.
+The candidate bounds bond count, beneficiary count, document size, text length, payout, and term/grace durations in source. It accepts HTTPS URLs and rejects common private/local hostnames and literal IP-style hosts. It rejects a non-2xx response if the transport supplies an HTTP status, but the pinned Direct Mode `web.get` mock exposes only a body; non-2xx rejection is therefore not demonstrated for the target runner. The GenVM web API documentation does not establish a final URL field or redirect-blocking option, so DNS rebinding and redirects to untrusted origins remain unresolved risks. A hash mismatch fails closed to a non-paying result if consensus reaches agreement.
+
+There is no autonomous monitor or keeper service. Beneficiaries, providers, or any other caller must notice policy changes and submit checks before coverage expires. An outage or missed check can allow the claim deadline to pass without a breach being recorded. No backend adjudicator is part of this product.
+
+## Verification boundaries
+
+- Fake-runtime tests validate contract logic and adversarial conditions without GenVM.
+- GenLayer Direct Mode executes the contract with GenVM and mocked nondeterministic web/LLM responses. It is not network consensus.
+- `genvm-lint check` runs the official linter and SDK semantic validation for the selected runtime family.
+- Browser tests and type/build checks validate the frontend, not contract settlement.
+- Studio deployment and finalized transaction receipts are separate evidence. The preserved deployment and receipts are for an earlier source SHA; the current candidate is not deployed.

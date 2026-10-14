@@ -7,8 +7,7 @@ jobs:
   contract-unit:
     runs-on: ubuntu-latest
     env:
-      # Match the runner family used on Studio Dev. Both GenLayer tools still
-      # expect .tar runner packages; tools/genvm_zip_compat.py adapts the ZIPs.
+      # Match the Studio Dev runner family; use GenLayer's official RC tooling.
       GENVM_VERSION: v0.6.0-rc5
     steps:
       - uses: actions/checkout@v4
@@ -20,10 +19,12 @@ jobs:
       - name: Contract syntax check
         run: python -m py_compile contracts/bermond.py
       - name: GenVM lint and SDK validation
-        run: python -m tools.genvm_zip_compat check contracts/bermond.py
+        run: genvm-lint check contracts/bermond.py
+      - name: Prepare the official Direct Mode runner bundle
+        run: echo "GENVM_PREBUILT_DIR=$(python -m tools.prepare_genvm_prebuilt)" >> "$GITHUB_ENV"
       - name: Fake-runtime and GenLayer Direct Mode tests
         if: always()
-        run: python -m pytest -q tests
+        run: python -m pytest -q -p no:cacheprovider tests
   frontend:
     runs-on: ubuntu-latest
     defaults:

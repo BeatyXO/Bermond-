@@ -43,6 +43,7 @@ def main() -> int:
     expected_methods = {
         "create_bond",
         "enroll_subscriber",
+        "accept_bond",
         "fund_bond",
         "check_policy",
         "claim_compensation",
