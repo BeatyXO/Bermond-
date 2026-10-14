@@ -7,6 +7,14 @@ import pytest
 from pathlib import Path
 from datetime import datetime, timezone
 
+# GenLayer's pinned Direct Mode loader currently only extracts nested TAR
+# runners, while the Studio Dev v0.6 release bundles the same runners as ZIPs.
+# Patch the loader in-process so Direct Mode exercises the pinned SDK instead
+# of failing before contract import. The installed package itself is untouched.
+from tools.genvm_zip_compat import _install_for_direct_mode
+
+_install_for_direct_mode()
+
 ADDRS = ['0x' + format(k, '040x') for k in range(1, 15)]
 
 class Revert(Exception):

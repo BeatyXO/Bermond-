@@ -99,7 +99,7 @@ def test_native_vm_persists_bond_and_freezes_enrollment(direct_vm, direct_deploy
     bond = contract.get_bond("direct-001")
     assert bond["state"] == "ACTIVE"
     assert bond["reserved_wei"] == 1_000
-    assert bond["subscribers"] == [str(direct_alice).lower()]
+    assert bond["subscribers"] == [f"0x{direct_alice.hex()}".lower()]
     with direct_vm.expect_revert("enrollment frozen"):
         contract.enroll_subscriber("direct-001", direct_bob)
 
@@ -135,10 +135,13 @@ def test_native_web_render_and_validator_disagreement_fail_closed(direct_vm, dir
     direct_vm.mock_llm(PROMPT_PATTERN, json.dumps(compliant))
 
     result = contract.check_policy("direct-web-001")
-    assert result["verdict"] == "COMPLIANT"
+    assert result["verdict"] == "COMPLIANT", (result, direct_vm._traces)
 
     # Direct Mode captures the validator callback. Give the simulated validator
     # a separately obtained answer and require disagreement to reject the leader.
+    direct_vm.clear_mocks()
+    direct_vm.mock_web("archive.example.org", {"status": 200, "body": BASELINE})
+    direct_vm.mock_web("provider.example.org", {"status": 200, "body": CURRENT_POLICY})
     direct_vm.mock_llm(PROMPT_PATTERN, json.dumps(_classification("BREACHED")))
     assert direct_vm.run_validator(leader_result=compliant) is False
     assert contract.get_bond("direct-web-001")["state"] == "ACTIVE"

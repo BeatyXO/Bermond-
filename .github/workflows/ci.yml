@@ -6,6 +6,10 @@ on:
 jobs:
   contract-unit:
     runs-on: ubuntu-latest
+    env:
+      # Match the runner family used on Studio Dev. Both GenLayer tools still
+      # expect .tar runner packages; tools/genvm_zip_compat.py adapts the ZIPs.
+      GENVM_VERSION: v0.6.0-rc5
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -16,7 +20,7 @@ jobs:
       - name: Contract syntax check
         run: python -m py_compile contracts/bermond.py
       - name: GenVM lint and SDK validation
-        run: genvm-lint check contracts/bermond.py
+        run: python -m tools.genvm_zip_compat check contracts/bermond.py
       - name: Fake-runtime and GenLayer Direct Mode tests
         if: always()
         run: python -m pytest -q tests

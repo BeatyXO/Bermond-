@@ -8,20 +8,20 @@
     "source": "https://docs.genlayer.com/developers/networks"
   },
   "status": "DEPLOYED_VERIFIED",
-  "contract_address": "0xd2E64c15268edE3EfA637DD09496beC9c9F795C3",
+  "contract_address": "0x8A5cb514A6b8Eae009cB896F0EcAC2F208d954F9",
   "contract_dependency": "py-genlayer:5jycge4q8k23462jtb0b9fyey1s9qz928sz2nbrd9mg4sxqg2qng",
   "frontend_sdk": "genlayer-js@2.0.0-rc.1",
-  "release_source_sha256": "b200f5138385219a3e9585ab442247f836922e5cea599013ecdc91881abd270d",
+  "release_source_sha256": "e1987c6d5b2cff228025e5be8d20d570cd436e05f797569b66020906f0cc1554",
   "deployment_transaction": {
-    "hash": "0x134140ee9918c4fef5c5e210435b0d952d58430df4ef8f36be871d26cdc4ede7",
+    "hash": "0x0a37753101ddc15e274c3dbe0e744dc5c2138575dfb4006a21df43c1df82a8af",
     "status": {
       "state": "finalized",
       "outcome": "accepted"
     },
     "execution_result": "FINISHED_WITH_RETURN",
-    "contract_address": "0xd2E64c15268edE3EfA637DD09496beC9c9F795C3",
+    "contract_address": "0x8A5cb514A6b8Eae009cB896F0EcAC2F208d954F9",
     "attempted_address": null,
-    "source_sha256": "b200f5138385219a3e9585ab442247f836922e5cea599013ecdc91881abd270d"
+    "source_sha256": "e1987c6d5b2cff228025e5be8d20d570cd436e05f797569b66020906f0cc1554"
   },
   "schema": {
     "ctor": {
@@ -187,7 +187,7 @@
   },
   "code_parity": "EXACT_BYTES_MATCH",
   "receipt_finality": "FINALIZED_SUCCESS",
-  "blocker": "The existing deployment remains source-matched to release SHA-256 b200f5138385219a3e9585ab442247f836922e5cea599013ecdc91881abd270d. The hardened working-tree contract has candidate SHA-256 e1987c6d5b2cff228025e5be8d20d570cd436e05f797569b66020906f0cc1554 and is not deployed. Redeploy only after pinned GenVM SDK validation and Direct Mode pass. Current latest GitHub Actions failure: pinned py-genlayer runner archive omits the required hash path; fake-runtime tests were skipped by workflow order. Studio state reads remain unavailable.",
+  "blocker": "Studio Dev gen_call and transaction-specific fee estimate return a server-side SQLAlchemy transaction error, preventing independent post-write state reads. Finalized lifecycle transactions and transfer messages are recorded in receipts.",
   "studio_transfer_note": "Studio documents that @gl.evm.contract_interface calls to EOAs are not implemented; external GEN payout settlement requires a supporting network.",
   "cases": [
     {
@@ -329,6 +329,17 @@
       "contract_address": "0xd2E64c15268edE3EfA637DD09496beC9c9F795C3",
       "attempted_address": null,
       "source_sha256": "b200f5138385219a3e9585ab442247f836922e5cea599013ecdc91881abd270d"
+    },
+    {
+      "hash": "0x0a37753101ddc15e274c3dbe0e744dc5c2138575dfb4006a21df43c1df82a8af",
+      "status": {
+        "state": "finalized",
+        "outcome": "accepted"
+      },
+      "execution_result": "FINISHED_WITH_RETURN",
+      "contract_address": "0x8A5cb514A6b8Eae009cB896F0EcAC2F208d954F9",
+      "attempted_address": null,
+      "source_sha256": "e1987c6d5b2cff228025e5be8d20d570cd436e05f797569b66020906f0cc1554"
     }
   ],
   "verification": {
@@ -337,22 +348,22 @@
       "status": "FINALIZED",
       "statusCode": 7
     },
-    "local_source_sha256": "b200f5138385219a3e9585ab442247f836922e5cea599013ecdc91881abd270d",
-    "deployed_source_sha256": "b200f5138385219a3e9585ab442247f836922e5cea599013ecdc91881abd270d",
+    "local_source_sha256": "e1987c6d5b2cff228025e5be8d20d570cd436e05f797569b66020906f0cc1554",
+    "deployed_source_sha256": "e1987c6d5b2cff228025e5be8d20d570cd436e05f797569b66020906f0cc1554",
     "exact_bytes_match": true
   },
   "pending_transaction": null,
   "pending_deployment": null,
   "last_deployment_attempt": {
-    "hash": "0x134140ee9918c4fef5c5e210435b0d952d58430df4ef8f36be871d26cdc4ede7",
+    "hash": "0x0a37753101ddc15e274c3dbe0e744dc5c2138575dfb4006a21df43c1df82a8af",
     "status": {
       "state": "finalized",
       "outcome": "accepted"
     },
     "execution_result": "FINISHED_WITH_RETURN",
-    "contract_address": "0xd2E64c15268edE3EfA637DD09496beC9c9F795C3",
+    "contract_address": "0x8A5cb514A6b8Eae009cB896F0EcAC2F208d954F9",
     "attempted_address": null,
-    "source_sha256": "b200f5138385219a3e9585ab442247f836922e5cea599013ecdc91881abd270d"
+    "source_sha256": "e1987c6d5b2cff228025e5be8d20d570cd436e05f797569b66020906f0cc1554"
   },
   "live_cases": [
     {
@@ -964,6 +975,165 @@
         "execution_result": "FINISHED_WITH_RETURN",
         "second_release_guard": "rejected locally before submission"
       }
+    },
+    {
+      "id": "studio-breach-1791980098",
+      "expected": "BREACHED",
+      "baseline_url": "https://raw.githubusercontent.com/BeatyXO/Bermond-/a9eab6aa2be30d81c8d296e38a9f8ef366f64761/deployments/fixtures/baseline.txt",
+      "current_url": "https://raw.githubusercontent.com/BeatyXO/Bermond-/a9eab6aa2be30d81c8d296e38a9f8ef366f64761/deployments/fixtures/breached.txt",
+      "provider": "0xD6423aE82a975d55C6CeaC222827A727325e0459",
+      "beneficiary": "0x39680bd423437C0Eaa18493629652821Ec672C61",
+      "payout_wei": 1000000000000000000,
+      "receipts": [
+        {
+          "function": "create_bond",
+          "bond_id": "studio-breach-1791980098",
+          "hash": "0x8341311a330d6e6cb47539fdb7fb398009da26a9d5094cc63a89aeded2c46a44",
+          "status": {
+            "state": "finalized",
+            "outcome": "accepted"
+          },
+          "execution_result": "FINISHED_WITH_RETURN",
+          "successful": true,
+          "runtime_error": null
+        },
+        {
+          "function": "enroll_subscriber",
+          "bond_id": "studio-breach-1791980098",
+          "hash": "0x843681e2bfecb4d6552d89275440428a8ce08a24be17f2a944df1a0068ac05d7",
+          "status": {
+            "state": "finalized",
+            "outcome": "accepted"
+          },
+          "execution_result": "FINISHED_WITH_RETURN",
+          "successful": true,
+          "runtime_error": null
+        },
+        {
+          "function": "fund_bond",
+          "bond_id": "studio-breach-1791980098",
+          "hash": "0x53d3d1d531074504d28f59992605fad92f1c7c647dec9908492077a74393390c",
+          "status": {
+            "state": "finalized",
+            "outcome": "accepted"
+          },
+          "execution_result": "FINISHED_WITH_RETURN",
+          "successful": true,
+          "runtime_error": null
+        },
+        {
+          "function": "check_policy",
+          "bond_id": "studio-breach-1791980098",
+          "hash": "0xc7000a360b459163ae6b8464dc5fe7048c593eaea18235ef50c2df290f7ee149",
+          "status": {
+            "state": "finalized",
+            "outcome": "accepted"
+          },
+          "execution_result": "FINISHED_WITH_RETURN",
+          "successful": true,
+          "runtime_error": null
+        },
+        {
+          "function": "claim_compensation",
+          "bond_id": "studio-breach-1791980098",
+          "hash": "0x5c5c4aa52b655a807c96ea392805efdc2dffd62dcfd55e6cff0d292f62ebe961",
+          "status": {
+            "state": "finalized",
+            "outcome": "accepted"
+          },
+          "execution_result": "FINISHED_WITH_RETURN",
+          "successful": true,
+          "runtime_error": null
+        }
+      ],
+      "state": "CLAIM_RESULT_RECORDED_STATE_READ_UNAVAILABLE",
+      "last_verdict": null,
+      "claim_deadline": 1791984358,
+      "release_eligible_after": 1791984359
+    },
+    {
+      "id": "studio-release-1791980842",
+      "expected": "ACTIVE_RELEASE",
+      "baseline_url": "https://raw.githubusercontent.com/BeatyXO/Bermond-/a9eab6aa2be30d81c8d296e38a9f8ef366f64761/deployments/fixtures/baseline.txt",
+      "current_url": "https://raw.githubusercontent.com/BeatyXO/Bermond-/a9eab6aa2be30d81c8d296e38a9f8ef366f64761/deployments/fixtures/breached.txt",
+      "provider": "0xD6423aE82a975d55C6CeaC222827A727325e0459",
+      "beneficiary": "0x39680bd423437C0Eaa18493629652821Ec672C61",
+      "payout_wei": 1000000000000000000,
+      "receipts": []
+    },
+    {
+      "id": "studio-release-1791980857",
+      "expected": "ACTIVE_RELEASE",
+      "baseline_url": "https://raw.githubusercontent.com/BeatyXO/Bermond-/a9eab6aa2be30d81c8d296e38a9f8ef366f64761/deployments/fixtures/baseline.txt",
+      "current_url": "https://raw.githubusercontent.com/BeatyXO/Bermond-/a9eab6aa2be30d81c8d296e38a9f8ef366f64761/deployments/fixtures/breached.txt",
+      "provider": "0xD6423aE82a975d55C6CeaC222827A727325e0459",
+      "beneficiary": "0x39680bd423437C0Eaa18493629652821Ec672C61",
+      "payout_wei": 1000000000000000000,
+      "receipts": [
+        {
+          "function": "create_bond",
+          "bond_id": "studio-release-1791980857",
+          "hash": "0x806678e8100388a33e6eb8723d4f350fdd0d2a9df42eb424cfc0df3e1339d5b1",
+          "status": {
+            "state": "finalized",
+            "outcome": "accepted"
+          },
+          "execution_result": "FINISHED_WITH_RETURN",
+          "successful": true,
+          "runtime_error": null
+        },
+        {
+          "function": "enroll_subscriber",
+          "bond_id": "studio-release-1791980857",
+          "hash": "0xc7f8c342b9c17dd952f56560b375bf27395408f98fb022e73f448db5935b0c74",
+          "status": {
+            "state": "finalized",
+            "outcome": "accepted"
+          },
+          "execution_result": "FINISHED_WITH_RETURN",
+          "successful": true,
+          "runtime_error": null
+        },
+        {
+          "function": "fund_bond",
+          "bond_id": "studio-release-1791980857",
+          "hash": "0x71c2918f5a6f5f15a9072f952a9b1fa966a670ef0d4fcea3a712a1e02e5c3f76",
+          "status": {
+            "state": "finalized",
+            "outcome": "accepted"
+          },
+          "execution_result": "FINISHED_WITH_RETURN",
+          "successful": true,
+          "runtime_error": null
+        },
+        {
+          "function": "release_collateral",
+          "bond_id": "studio-release-1791980857",
+          "hash": "0xc47b0c4887c0218c4f0e0ffacc4ef39543f479f6b638e61a36fb56f87a866008",
+          "status": {
+            "state": "finalized",
+            "outcome": "accepted"
+          },
+          "execution_result": "FINISHED_WITH_RETURN",
+          "successful": true,
+          "runtime_error": null
+        }
+      ],
+      "state": "RELEASE_FINALIZED",
+      "claim_deadline": 1791984558,
+      "release_eligible_after": 1791984559,
+      "release_receipt": {
+        "function": "release_collateral",
+        "bond_id": "studio-release-1791980857",
+        "hash": "0xc47b0c4887c0218c4f0e0ffacc4ef39543f479f6b638e61a36fb56f87a866008",
+        "status": {
+          "state": "finalized",
+          "outcome": "accepted"
+        },
+        "execution_result": "FINISHED_WITH_RETURN",
+        "successful": true,
+        "runtime_error": null
+      }
     }
   ],
   "lifecycle_transactions": [
@@ -1428,8 +1598,116 @@
       "execution_result": "FINISHED_WITH_RETURN",
       "successful": true,
       "runtime_error": null
+    },
+    {
+      "function": "create_bond",
+      "bond_id": "studio-breach-1791980098",
+      "hash": "0x8341311a330d6e6cb47539fdb7fb398009da26a9d5094cc63a89aeded2c46a44",
+      "status": {
+        "state": "finalized",
+        "outcome": "accepted"
+      },
+      "execution_result": "FINISHED_WITH_RETURN",
+      "successful": true,
+      "runtime_error": null
+    },
+    {
+      "function": "enroll_subscriber",
+      "bond_id": "studio-breach-1791980098",
+      "hash": "0x843681e2bfecb4d6552d89275440428a8ce08a24be17f2a944df1a0068ac05d7",
+      "status": {
+        "state": "finalized",
+        "outcome": "accepted"
+      },
+      "execution_result": "FINISHED_WITH_RETURN",
+      "successful": true,
+      "runtime_error": null
+    },
+    {
+      "function": "fund_bond",
+      "bond_id": "studio-breach-1791980098",
+      "hash": "0x53d3d1d531074504d28f59992605fad92f1c7c647dec9908492077a74393390c",
+      "status": {
+        "state": "finalized",
+        "outcome": "accepted"
+      },
+      "execution_result": "FINISHED_WITH_RETURN",
+      "successful": true,
+      "runtime_error": null
+    },
+    {
+      "function": "check_policy",
+      "bond_id": "studio-breach-1791980098",
+      "hash": "0xc7000a360b459163ae6b8464dc5fe7048c593eaea18235ef50c2df290f7ee149",
+      "status": {
+        "state": "finalized",
+        "outcome": "accepted"
+      },
+      "execution_result": "FINISHED_WITH_RETURN",
+      "successful": true,
+      "runtime_error": null
+    },
+    {
+      "function": "claim_compensation",
+      "bond_id": "studio-breach-1791980098",
+      "hash": "0x5c5c4aa52b655a807c96ea392805efdc2dffd62dcfd55e6cff0d292f62ebe961",
+      "status": {
+        "state": "finalized",
+        "outcome": "accepted"
+      },
+      "execution_result": "FINISHED_WITH_RETURN",
+      "successful": true,
+      "runtime_error": null
+    },
+    {
+      "function": "create_bond",
+      "bond_id": "studio-release-1791980857",
+      "hash": "0x806678e8100388a33e6eb8723d4f350fdd0d2a9df42eb424cfc0df3e1339d5b1",
+      "status": {
+        "state": "finalized",
+        "outcome": "accepted"
+      },
+      "execution_result": "FINISHED_WITH_RETURN",
+      "successful": true,
+      "runtime_error": null
+    },
+    {
+      "function": "enroll_subscriber",
+      "bond_id": "studio-release-1791980857",
+      "hash": "0xc7f8c342b9c17dd952f56560b375bf27395408f98fb022e73f448db5935b0c74",
+      "status": {
+        "state": "finalized",
+        "outcome": "accepted"
+      },
+      "execution_result": "FINISHED_WITH_RETURN",
+      "successful": true,
+      "runtime_error": null
+    },
+    {
+      "function": "fund_bond",
+      "bond_id": "studio-release-1791980857",
+      "hash": "0x71c2918f5a6f5f15a9072f952a9b1fa966a670ef0d4fcea3a712a1e02e5c3f76",
+      "status": {
+        "state": "finalized",
+        "outcome": "accepted"
+      },
+      "execution_result": "FINISHED_WITH_RETURN",
+      "successful": true,
+      "runtime_error": null
+    },
+    {
+      "function": "release_collateral",
+      "bond_id": "studio-release-1791980857",
+      "hash": "0xc47b0c4887c0218c4f0e0ffacc4ef39543f479f6b638e61a36fb56f87a866008",
+      "status": {
+        "state": "finalized",
+        "outcome": "accepted"
+      },
+      "execution_result": "FINISHED_WITH_RETURN",
+      "successful": true,
+      "runtime_error": null
     }
   ],
   "candidate_contract_source_sha256": "e1987c6d5b2cff228025e5be8d20d570cd436e05f797569b66020906f0cc1554",
-  "candidate_deployment_status": "REDEPLOYMENT_REQUIRED_CONSENSUS_EVIDENCE_AND_ASSURANCE_CHANGES"
+  "candidate_deployment_status": "DEPLOYED_VERIFIED"
 }

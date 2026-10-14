@@ -12,7 +12,7 @@
 | Underfunded escrow | Exact payable amount required, reserve per bond | Audit global balance liabilities after fee accounting |
 | Unlimited input/CPU | Document, clause, ID, URL, bond and subscriber bounds | Need runtime gas and storage profiling |
 | Wrong chain/contract | Frontend Studio Dev pin + empty address fails closed | Verify deployment source hash, contract address, SDK version |
-| Rejected consensus | Validator agreement includes per-dimension status, witness source, exact normalized excerpt, and full SHA-256 of the cited baseline/current document; disagreement cannot authorize a breach | Real network may leave transaction undetermined; cannot force `UNRESOLVED` receipt. Semantic validation and Direct Mode remain blocked while the pinned runner artifact is unavailable |
+| Rejected consensus | Validator agreement includes per-dimension status, witness source, exact normalized excerpt, and full SHA-256 of the cited baseline/current document; disagreement cannot authorize a breach | Real network may leave transaction undetermined; cannot force `UNRESOLVED` receipt. Studio's current read endpoint prevents independent verification of the finalized policy verdict |
 | Claim after coverage closes | Claim deadline enforced with transaction-pinned timestamp | Long delay, clock semantics on target GenVM need verification |
 | Arbitrary external links | Validated HTTPS URL and bounded fetch | DNS rebinding, redirects, web renderer trust require live tests |
 
