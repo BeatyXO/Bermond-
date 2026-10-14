@@ -32,15 +32,17 @@ Status markers: [x] static/source artifact present, [ ] requires runtime/live ve
 ## Live evidence
 
 - [x] Deploy source-matched `contracts/bermond.py` on Studio Dev; exact deployed bytes and schema verified
-- [ ] Read finalized contract state and submit live lifecycle writes; Studio `gen_call` is currently failing server-side
+- [x] Submit live lifecycle writes for a breach scenario; finalized state reads remain blocked by Studio `gen_call`
 - [ ] Scenario A: meaning-equivalent rewrite (`COMPLIANT`), no payout
-- [ ] Scenario B: material unilateral quota reduction (`BREACHED`), one exact claim, replay blocked
+- [x] Scenario B: material unilateral quota reduction (`BREACHED`) and one exact 1-GEN claim
+- [ ] Scenario B: replay claim is blocked
 - [ ] Scenario C: unavailable/mismatched evidence (`UNRESOLVED`), no payout
 - [ ] Scenario D: improved retention (`COMPLIANT`), no payout
 - [ ] Scenario E: expiry release returns only unused GEN, attempts to withdraw twice blocked
-- [ ] Capture finalized transaction hashes, receipts, transfers, authoritative post-write state
+- [x] Capture finalized transaction hashes, receipts, and emitted 1-GEN transfer
+- [ ] Read authoritative post-write state after Studio `gen_call` recovers
 - [ ] Publish wallet-free proof paths with live cards bound to exact contract IDs
-- [ ] Confirm deployment code source SHA-256 equals release commit bytes
+- [x] Confirm deployment code source SHA-256 equals deployed release bytes
 - [ ] Verify on fresh browser sessions; no fake or seeded `live` data
 
 **Not launch-ready until every live/runtime/financial gate has passed.**
@@ -51,5 +53,6 @@ Status markers: [x] static/source artifact present, [ ] requires runtime/live ve
 - `python -m pytest -q tests/test_contract.py`: **22 passed**. The Direct Mode fixture runner stalled because no local GenLayer node is available.
 - `genvm-lint lint contracts/bermond.py`: **3 checks passed**. SDK semantic validation/typecheck could not download the declared runner artifact; the official RPC schema was generated and verified instead.
 - `npm run typecheck`: passed; `npm run build`: passed (Vite reports the main JS chunk exceeds 500 kB); `npm test`: **3 passed**.
-- Studio Dev chain ID `61997`: deployment `0xe1902297a5466de8279325c488c2ea415f8cf0eff07ab75b61d412b9a0d586bb`, finalized `FINISHED_WITH_RETURN`, contract `0xda342EB824689891E020D1A503F527bff9fC5F26`. `gen_getContractCode` returned exact local bytes, SHA-256 `0e89aa135d2a818e548837777ecc5299ec24fcf94c5e957d2a3fb7669a6a85a3`; `gen_getContractSchema` exposes all nine expected methods.
-- No live bond write was submitted: read-only `gen_call` repeatedly returned `-32603` with SQLAlchemy `Can't reconnect until invalid transaction is rolled back`. This blocks full-cycle receipts on this host/node. Studio also does not support external EOA GEN payouts, so claim settlement and expiry release remain unverified.
+- Studio Dev chain ID `61997`: deployment `0x134140ee9918c4fef5c5e210435b0d952d58430df4ef8f36be871d26cdc4ede7`, finalized `FINISHED_WITH_RETURN`, contract `0xd2E64c15268edE3EfA637DD09496beC9c9F795C3`. `gen_getContractCode` returned exact local bytes, SHA-256 `b200f5138385219a3e9585ab442247f836922e5cea599013ecdc91881abd270d`; `gen_getContractSchema` exposes all nine expected methods.
+- A real 1-GEN lifecycle finalized successfully through `create_bond`, `enroll_subscriber`, `fund_bond`, `check_policy` (`BREACHED`), and `claim_compensation`. The claim receipt contains a finalized EOA transfer message for `1000000000000000000` wei; the beneficiary's public balance increased by approximately 1 GEN net of intervening test fees. Receipt hashes are recorded in `deployments/studio-dev.json`.
+- Studio's `gen_call` still returns `-32603` with SQLAlchemy `Can't reconnect until invalid transaction is rolled back`, so authoritative post-write state reads are unavailable. Expiry release has not been tested; it requires waiting past the claim deadline.

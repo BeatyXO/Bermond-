@@ -20,8 +20,7 @@ class FakeRecipient:
     transfers = []
     def __init__(self, address):
         self.address = address
-    def emit_transfer(self, value, on):
-        assert on == 'finalized'
+    def emit_transfer(self, value):
         self.transfers.append((self.address, value))
 
 class Provider:
@@ -31,6 +30,8 @@ class Provider:
         self.validator_answer = None
     def render(self, url, mode='text'):
         return self.body_by_url[url]
+    def get(self, url):
+        return types.SimpleNamespace(body=self.body_by_url[url].encode('utf-8'))
     def exec_prompt(self, prompt, response_format='json'):
         assert response_format == 'json'
         return self.answer

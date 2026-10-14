@@ -59,7 +59,7 @@ def main() -> int:
         fees = client.estimate_transaction_fees()
         tx_hash = client.deploy_contract(code=source, account=account, fees=fees)
         manifest["pending_deployment"] = {"hash": tx_hash, "source_sha256": source_hash}
-        MANIFEST.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+        MANIFEST.write_bytes((json.dumps(manifest, indent=2) + "\n").encode("utf-8"))
     print(f"transaction_hash={tx_hash}", flush=True)
     receipt = client.wait_for_finalization(
         tx_hash, interval=5, retries=180, full_transaction=True
@@ -106,7 +106,7 @@ def main() -> int:
         manifest["status"] = "PENDING_NO_DEPLOYMENT"
         manifest["receipt_finality"] = "FINALIZED_FAILED"
         manifest["blocker"] = "Deployment finalized with contract execution failure; inspect last_deployment_attempt before retrying."
-    MANIFEST.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+    MANIFEST.write_bytes((json.dumps(manifest, indent=2) + "\n").encode("utf-8"))
 
     print(f"source_sha256={source_hash}")
     print(f"finalized_success={str(successful).lower()}")

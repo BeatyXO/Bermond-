@@ -150,15 +150,37 @@ def unresolved(reason: str) -> dict[str, Any]:
 
 def read_evidence(url: str, expected_sha: str = '') -> dict[str, str] | None:
     try:
-        body = gl.nondet.web.render(url, mode='text')
-        if type(body) is not str or not body.strip() or len(body) > MAX_WEB:
-            return None
+        response = gl.nondet.web.get(url)
+        raw_body = response.body
+    except Exception as exc:
+        return {'url': url, 'sha256': '', 'body': '', 'error': f'web_get_failed:{type(exc).__name__}'}
+    if not isinstance(raw_body, bytes):
+        return {'url': url, 'sha256': '', 'body': '', 'error': f'web_body_type:{type(raw_body).__name__}'}
+    try:
+        body = raw_body.decode('utf-8')
+    except Exception as exc:
+        return {'url': url, 'sha256': '', 'body': '', 'error': f'utf8_decode_failed:{type(exc).__name__}'}
+    if not body.strip() or len(body) > MAX_WEB:
+        return {'url': url, 'sha256': '', 'body': '', 'error': 'web_body_empty_or_too_large'}
+    try:
         digest = hashlib.sha256(body.encode('utf-8')).hexdigest()
-        if expected_sha and digest != expected_sha:
-            return None
-        return {'url': url, 'sha256': digest, 'body': body}
     except Exception:
-        return None
+        return {'url': url, 'sha256': '', 'body': '', 'error': 'web_body_hash_failed'}
+    if expected_sha and digest != expected_sha:
+        return {'url': url, 'sha256': digest, 'body': '', 'error': f'sha256_mismatch:expected={expected_sha}:actual={digest}'}
+    return {'url': url, 'sha256': digest, 'body': body}
+
+
+def evidence_issue(baseline: dict[str, str] | None, current: dict[str, str] | None) -> str | None:
+    if baseline is None:
+        return 'Baseline policy evidence is unavailable.'
+    if baseline.get('error'):
+        return f"Baseline policy evidence failed: {baseline['error']}"
+    if current is None:
+        return 'Current published policy evidence is unavailable.'
+    if current.get('error'):
+        return f"Current published policy evidence failed: {current['error']}"
+    return None
 
 
 def policy_prompt(record: dict[str, Any], baseline: dict[str, str], current: dict[str, str]) -> str:
@@ -200,7 +222,9 @@ class Bermond(Contract):
         require(address_key(gl.message.sender_address) == bond['provider'], 'provider only')
 
     def _transfer(self, address: str, amount: int) -> None:
-        _Recipient(Address(address)).emit_transfer(value=u256(amount), on='finalized')
+        # EOA transfers are external messages and finalize implicitly; unlike
+        # IC-to-IC messages, the EVM interface does not accept an `on` option.
+        _Recipient(Address(address)).emit_transfer(value=u256(amount))
 
     @gl.public.write
     def create_bond(self, bond_id: str, service_name: str, category: str, baseline_url: str,
@@ -271,8 +295,9 @@ class Bermond(Contract):
         def probe() -> dict[str, Any]:
             frozen = read_evidence(record['baseline_url'], record['baseline_sha256'])
             latest = read_evidence(record['live_url'])
-            if frozen is None or latest is None:
-                return unresolved('Baseline commitment or current published policy was unavailable or invalid.')
+            issue = evidence_issue(frozen, latest)
+            if issue:
+                return unresolved(issue)
             return gl.nondet.exec_prompt(policy_prompt(record, frozen, latest), response_format='json')
 
         def verify(candidate: gl.vm.Result) -> bool:
@@ -282,8 +307,9 @@ class Bermond(Contract):
                 received = validate_semantics(candidate.calldata)
                 frozen = read_evidence(record['baseline_url'], record['baseline_sha256'])
                 latest = read_evidence(record['live_url'])
-                if frozen is None or latest is None:
-                    local = unresolved('Baseline commitment or current published policy was unavailable or invalid.')
+                issue = evidence_issue(frozen, latest)
+                if issue:
+                    local = unresolved(issue)
                 else:
                     local = gl.nondet.exec_prompt(policy_prompt(record, frozen, latest), response_format='json')
                 return comparison_core(received) == comparison_core(validate_semantics(local))

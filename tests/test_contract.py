@@ -10,6 +10,19 @@ L_URL = 'https://service.example.com/terms'
 DIMENSIONS = ('allowance', 'retention', 'refunds', 'notice')
 
 
+def test_read_evidence_hashes_raw_utf8_response_bytes(env):
+    env.provider.body_by_url[B_URL] = BASE
+    expected = hashlib.sha256(BASE.encode('utf-8')).hexdigest()
+    evidence = env.mod.read_evidence(B_URL, expected)
+    assert evidence == {'url': B_URL, 'sha256': expected, 'body': BASE}
+
+
+def test_read_evidence_rejects_raw_byte_hash_mismatch(env):
+    env.provider.body_by_url[B_URL] = BASE
+    evidence = env.mod.read_evidence(B_URL, '0' * 64)
+    assert evidence['error'].startswith('sha256_mismatch')
+
+
 def answer(statuses=None, **kw):
     statuses = statuses or ['UNCHANGED'] * 4
     return {'criteria': [{'dimension': d, 'status': s, 'witness': 'both', 'fact': 'Policy comparison based on both committed sources.'} for d, s in zip(DIMENSIONS, statuses)], 'reasoning': 'Independent semantic classification.' , **kw}

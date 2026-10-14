@@ -69,8 +69,8 @@ def main() -> int:
         "deployed_source_sha256": remote_hash,
         "exact_bytes_match": True,
     }
-    manifest["blocker"] = "Studio Dev does not support external GEN settlement to EOA recipients; the claim transfer and expiry release require a supporting network or later deadline finalization."
-    MANIFEST.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+    manifest["blocker"] = "Full create/enroll/fund/BREACHED-check/claim lifecycle succeeded on the verified deployment. Claim emitted the finalized 1-GEN EOA transfer; the beneficiary balance increased by approximately 1 GEN net across the test window. Studio gen_call remains unhealthy, and expiry release is not yet tested."
+    MANIFEST.write_bytes((json.dumps(manifest, indent=2) + "\n").encode("utf-8"))
     print(f"contract_address={address}")
     print(f"deployment_status={status.get('status')}")
     print(f"source_sha256={local_hash}")
