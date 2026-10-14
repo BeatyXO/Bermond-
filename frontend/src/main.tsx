@@ -1,6 +1,6 @@
 import React,{useCallback,useEffect,useMemo,useState} from 'react';
 import {createRoot} from 'react-dom/client';
-import {ArrowRight,ArrowUpRight,CheckCircle2,ChevronDown,ChevronLeft,ChevronRight,CircleAlert,Copy,ExternalLink,Eye,Fingerprint,Globe2,Layers3,LockKeyhole,Menu,MoveUpRight,Plus,RefreshCw,Scale,Search,Shield,ShieldAlert,ShieldCheck,Wallet,X,Zap} from 'lucide-react';
+import {ArrowRight,ArrowUpRight,CheckCircle2,ChevronDown,ChevronLeft,ChevronRight,CircleAlert,Copy,ExternalLink,Eye,Fingerprint,Globe2,Layers3,LockKeyhole,Menu,MoveUpRight,Plus,RefreshCw,Scale,Search,Shield,ShieldAlert,ShieldCheck,Sparkles,Wallet,X,Zap} from 'lucide-react';
 import {connectWallet,readAllBonds,readBond,walletAddress,writeBond,explorerUrl,readPendingWrite,resumePendingWrite} from './chain';
 import type {PendingWrite} from './chain';
 import {PREVIEW_CASES} from './fixtures';

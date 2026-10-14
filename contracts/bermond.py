@@ -5,16 +5,15 @@ Single standalone GenLayer Intelligent Contract. An LLM classifies *only* clause
 The contract controls status, eligibility, recipients, GEN payments and deadlines.
 Studio-dev SDK pin is provisional until verified through target GenVM.
 """
-from __future__ import annotations
-
 import hashlib
 import json
 from datetime import datetime, timezone
 from urllib.parse import urlsplit, urlunsplit
 from typing import Any
 import genlayer as gl
+from genlayer.contract import Contract
 from genlayer.types import Address, u256
-from genlayer import TreeMap
+from genlayer.storage.tree_map import TreeMap
 
 MAX_BONDS = 120
 MAX_BENEFICIARIES = 12
@@ -182,12 +181,11 @@ def policy_prompt(record: dict[str, Any], baseline: dict[str, str], current: dic
     )
 
 
-class Bermond(gl.Contract):
+class Bermond(Contract):
     bonds: TreeMap[str, str]
     bond_ids_json: str
 
     def __init__(self):
-        self.bonds = TreeMap()
         self.bond_ids_json = '[]'
 
     def _bond(self, bond_id: str) -> dict[str, Any]:

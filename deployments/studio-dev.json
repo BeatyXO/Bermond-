@@ -7,16 +7,185 @@
     "explorer": "https://explorer-studio-dev.genlayer.com",
     "source": "https://docs.genlayer.com/developers/networks"
   },
-  "status": "PENDING_NO_DEPLOYMENT",
-  "contract_address": null,
+  "status": "DEPLOYED_VERIFIED",
+  "contract_address": "0xda342EB824689891E020D1A503F527bff9fC5F26",
   "contract_dependency": "py-genlayer:5jycge4q8k23462jtb0b9fyey1s9qz928sz2nbrd9mg4sxqg2qng",
   "frontend_sdk": "genlayer-js@2.0.0-rc.1",
-  "release_source_sha256": "fa7ea686c9e0e58d3102e0bce6cdaf7b686e9d51cecf69b43b07200586029220",
-  "deployment_transaction": null,
-  "schema": null,
-  "code_parity": "UNVERIFIED",
-  "receipt_finality": "UNVERIFIED",
-  "blocker": "No Studio deployment credentials or authoritative deployment receipt were available in this workspace.",
+  "release_source_sha256": "0e89aa135d2a818e548837777ecc5299ec24fcf94c5e957d2a3fb7669a6a85a3",
+  "deployment_transaction": {
+    "hash": "0xe1902297a5466de8279325c488c2ea415f8cf0eff07ab75b61d412b9a0d586bb",
+    "status": {
+      "state": "finalized",
+      "outcome": "accepted"
+    },
+    "execution_result": "FINISHED_WITH_RETURN",
+    "contract_address": "0xda342EB824689891E020D1A503F527bff9fC5F26"
+  },
+  "schema": {
+    "ctor": {
+      "params": [],
+      "kwparams": {}
+    },
+    "methods": {
+      "check_policy": {
+        "params": [
+          [
+            "bond_id",
+            "string"
+          ]
+        ],
+        "kwparams": {},
+        "readonly": false,
+        "ret": {
+          "$dict": "any"
+        },
+        "payable": false
+      },
+      "claim_compensation": {
+        "params": [
+          [
+            "bond_id",
+            "string"
+          ]
+        ],
+        "kwparams": {},
+        "readonly": false,
+        "ret": "string",
+        "payable": false
+      },
+      "create_bond": {
+        "params": [
+          [
+            "bond_id",
+            "string"
+          ],
+          [
+            "service_name",
+            "string"
+          ],
+          [
+            "category",
+            "string"
+          ],
+          [
+            "baseline_url",
+            "string"
+          ],
+          [
+            "baseline_sha256",
+            "string"
+          ],
+          [
+            "live_url",
+            "string"
+          ],
+          [
+            "protected_terms_json",
+            "string"
+          ],
+          [
+            "payout_wei",
+            "int"
+          ],
+          [
+            "coverage_ends",
+            "int"
+          ],
+          [
+            "claim_deadline",
+            "int"
+          ]
+        ],
+        "kwparams": {},
+        "readonly": false,
+        "ret": "string",
+        "payable": false
+      },
+      "enroll_subscriber": {
+        "params": [
+          [
+            "bond_id",
+            "string"
+          ],
+          [
+            "beneficiary",
+            "address"
+          ]
+        ],
+        "kwparams": {},
+        "readonly": false,
+        "ret": "string",
+        "payable": false
+      },
+      "fund_bond": {
+        "params": [
+          [
+            "bond_id",
+            "string"
+          ]
+        ],
+        "kwparams": {},
+        "readonly": false,
+        "ret": "string",
+        "payable": true
+      },
+      "get_bond": {
+        "params": [
+          [
+            "bond_id",
+            "string"
+          ]
+        ],
+        "kwparams": {},
+        "readonly": true,
+        "ret": {
+          "$dict": "any"
+        }
+      },
+      "get_bond_ids": {
+        "params": [],
+        "kwparams": {},
+        "readonly": true,
+        "ret": [
+          {
+            "$rep": "string"
+          }
+        ]
+      },
+      "get_claim_status": {
+        "params": [
+          [
+            "bond_id",
+            "string"
+          ],
+          [
+            "claimant",
+            "address"
+          ]
+        ],
+        "kwparams": {},
+        "readonly": true,
+        "ret": {
+          "$dict": "any"
+        }
+      },
+      "release_collateral": {
+        "params": [
+          [
+            "bond_id",
+            "string"
+          ]
+        ],
+        "kwparams": {},
+        "readonly": false,
+        "ret": "string",
+        "payable": false
+      }
+    }
+  },
+  "code_parity": "EXACT_BYTES_MATCH",
+  "receipt_finality": "FINALIZED_SUCCESS",
+  "blocker": "Live lifecycle writes were not submitted: Studio Dev gen_call repeatedly returns -32603 (SQLAlchemy: connection in failed transaction). Studio also cannot settle external GEN transfers to EOA recipients, so claim settlement and expiry release remain unproven.",
   "studio_transfer_note": "Studio documents that @gl.evm.contract_interface calls to EOAs are not implemented; external GEN payout settlement requires a supporting network.",
   "cases": [
     {
@@ -43,5 +212,88 @@
       "receipts": [],
       "state": "preview_only"
     }
-  ]
+  ],
+  "deployment_attempts": [
+    {
+      "hash": "0x3e1fcc2995735686b99f0128764d911d3e39847fa57ddbf157c0be820a572406",
+      "status": "EVM_REVERTED",
+      "execution_result": "RollupBudgetBelowFloor",
+      "contract_address": null,
+      "runtime_error": "Submission fee profile was below the live v0.6 execution budget floor."
+    },
+    {
+      "hash": "0x04c330fb04a7d3f7373f66261f0252e0fabe38d0ed16ed235a0b16fde5317beb",
+      "status": "FINALIZED_FAILED",
+      "execution_result": "FINISHED_WITH_ERROR",
+      "contract_address": null,
+      "source_sha256": "fa7ea686c9e0e58d3102e0bce6cdaf7b686e9d51cecf69b43b07200586029220",
+      "runtime_error": "ImportError: cannot import name 'TreeMap' from 'genlayer'"
+    },
+    {
+      "hash": "0x6201e40015441b929fb58893d6fa110faa9b39c4c6a38ad981cd74c5eb816c9e",
+      "status": "FINALIZED_FAILED",
+      "execution_result": "FINISHED_WITH_ERROR",
+      "contract_address": null,
+      "source_sha256": "c12b96f5b4ed1450659bef90b365e365050b9ead9b1e7be4e749b36c6608ea56",
+      "runtime_error": "AttributeError: module 'genlayer' has no attribute 'Contract'",
+      "attempted_address": null
+    },
+    {
+      "hash": "0x520ffdd82c22da9f00116b312f6f3854b08401a0d57aa6209f266f75318ffc94",
+      "status": "FINALIZED_FAILED",
+      "execution_result": "FINISHED_WITH_ERROR",
+      "contract_address": null,
+      "source_sha256": "ba3be4ce3537f8107db178a2ef014b0c7ecfc8c2c3769a6c20441086cad7c896",
+      "runtime_error": "IndentationError: expected an indented block after class definition",
+      "attempted_address": "0x020557D90EfedD255C7A92be0237375621c0C326"
+    },
+    {
+      "hash": "0x5a758749a9350953731ab42830870228da54a80df0884d30e96e796d9b0dcb28",
+      "status": "FINALIZED_FAILED",
+      "execution_result": "FINISHED_WITH_ERROR",
+      "contract_address": null,
+      "source_sha256": "dfa30d2027d3baf58826aabc29fea9f4393804994ccb124444d492b197f048e1",
+      "runtime_error": "ModuleNotFoundError: No module named 'genlayer.gl'",
+      "attempted_address": "0xCF15Bb5bfEb70c0A7A69d67F10fE7B116e003cF1"
+    },
+    {
+      "hash": "0xe6bb0ad957cf50b6df6bd9fa66b91a12a97e015abe25ab7b9ae8af5367b4ae33",
+      "status": "FINALIZED_FAILED",
+      "execution_result": "FINISHED_WITH_ERROR",
+      "contract_address": null,
+      "source_sha256": "379ed91184a686bac90e63625a2248366c810dcc828739c1e0492f69aa4f3027",
+      "runtime_error": "GenerationError: generic TreeMap storage cannot be explicitly constructed; use GenVM zero-initialized storage.",
+      "attempted_address": "0x618694208A605ca4ACc6eb3aBc9b271D6A56f46c"
+    },
+    {
+      "hash": "0x2707988142ad74ca72de43b73accb7831fdf5d65c6b1771e61d26eb40fb255cb",
+      "status": "FINALIZED_SUCCESS",
+      "execution_result": "FINISHED_WITH_RETURN",
+      "contract_address": "0x69F3AF275652fa0E0B41B775b880203Fbb9ccA44",
+      "source_sha256": "aceea7c97a9f76b851f16a359fbbbf556e2f7b80090c0aac8ff738320cdb6bca",
+      "runtime_error": "GenerationError: generic TreeMap storage must use GenVM zero-initialization",
+      "verification_issue": "gen_getContractSchema failed because postponed annotations were exposed as strings; this deployment is superseded by the verified current release."
+    },
+    {
+      "hash": "0xe1902297a5466de8279325c488c2ea415f8cf0eff07ab75b61d412b9a0d586bb",
+      "status": {
+        "state": "finalized",
+        "outcome": "accepted"
+      },
+      "execution_result": "FINISHED_WITH_RETURN",
+      "contract_address": "0xda342EB824689891E020D1A503F527bff9fC5F26",
+      "source_sha256": "0e89aa135d2a818e548837777ecc5299ec24fcf94c5e957d2a3fb7669a6a85a3"
+    }
+  ],
+  "verification": {
+    "chain_id": 61997,
+    "deployment_status": {
+      "status": "FINALIZED",
+      "statusCode": 7
+    },
+    "local_source_sha256": "0e89aa135d2a818e548837777ecc5299ec24fcf94c5e957d2a3fb7669a6a85a3",
+    "deployed_source_sha256": "0e89aa135d2a818e548837777ecc5299ec24fcf94c5e957d2a3fb7669a6a85a3",
+    "exact_bytes_match": true
+  },
+  "pending_transaction": null
 }

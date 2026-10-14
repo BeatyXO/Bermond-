@@ -1,4 +1,5 @@
 node_modules/
+.deploy-venv/
 dist/
 .env
 .env.*
@@ -7,4 +8,5 @@ __pycache__/
 .pytest_cache/
 artifacts/
 *.pyc
+*.tsbuildinfo
 .DS_Store

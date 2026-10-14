@@ -38,6 +38,7 @@ class Provider:
 class FakeVM:
     UserError = Revert
     Return = Return
+    Result = object
     def __init__(self, provider):
         self.provider = provider
         self.disagree = False
@@ -69,8 +70,22 @@ def env(monkeypatch):
     types_module = types.ModuleType('genlayer.types')
     types_module.Address = str
     types_module.u256 = int
+    storage_module = types.ModuleType('genlayer.storage.tree_map')
+    storage_module.TreeMap = dict
+    gl.__path__ = []
+    contract_module = types.ModuleType('genlayer.contract')
+    class FakeContract:
+        def __new__(cls, *args, **kwargs):
+            instance = super().__new__(cls)
+            instance.bonds = {}
+            instance.bond_ids_json = '[]'
+            return instance
+    contract_module.Contract = FakeContract
     monkeypatch.setitem(sys.modules, 'genlayer', gl)
+    monkeypatch.setitem(sys.modules, 'genlayer.contract', contract_module)
     monkeypatch.setitem(sys.modules, 'genlayer.types', types_module)
+    monkeypatch.setitem(sys.modules, 'genlayer.storage', types.ModuleType('genlayer.storage'))
+    monkeypatch.setitem(sys.modules, 'genlayer.storage.tree_map', storage_module)
     path = Path(__file__).resolve().parents[1] / 'contracts' / 'bermond.py'
     spec = importlib.util.spec_from_file_location('bermond_contract_under_test', path)
     mod = importlib.util.module_from_spec(spec)

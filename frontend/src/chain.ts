@@ -1,6 +1,7 @@
 import {createClient,isSuccessful} from 'genlayer-js';
 import {studioDevnet} from 'genlayer-js/chains';
 import {TransactionHashVariant} from 'genlayer-js/types';
+import type {TransactionHash} from 'genlayer-js/types';
 import {contractAddress} from './protocol';
 import type {Bond} from './protocol';
 
@@ -8,12 +9,12 @@ type WalletProvider={request:(options:{method:string;params?:unknown[]})=>Promis
 declare global {interface Window{ethereum?:WalletProvider}}
 const chain=studioDevnet;
 const reader=createClient({chain});
-export interface PendingWrite {hash:`0x${string}`;functionName:string;submittedAt:number}
+export interface PendingWrite {hash:TransactionHash;functionName:string;submittedAt:number}
 const pendingKey='bermond:pending-write';
-export function readPendingWrite():PendingWrite|null{try{const raw=localStorage.getItem(pendingKey);if(!raw)return null;const value=JSON.parse(raw) as PendingWrite;return /^0x[a-f\d]+$/i.test(value.hash)&&typeof value.functionName==='string'?value:null}catch{return null}}
+export function readPendingWrite():PendingWrite|null{try{const raw=localStorage.getItem(pendingKey);if(!raw)return null;const value=JSON.parse(raw) as PendingWrite;return /^0x[a-f\d]{64}$/i.test(value.hash)&&typeof value.functionName==='string'?value:null}catch{return null}}
 function deployed():`0x${string}`{const value=contractAddress();if(!/^0x[a-f\d]{40}$/i.test(value))throw new Error('Bermond is not deployed. Reviewer preview is available without a wallet.');return value as `0x${string}`}
 export async function readBondIds():Promise<string[]>{return await reader.readContract({address:deployed(),functionName:'get_bond_ids',args:[],transactionHashVariant:TransactionHashVariant.LATEST_FINAL}) as string[]}
-export async function readBond(id:string):Promise<Bond>{return await reader.readContract({address:deployed(),functionName:'get_bond',args:[id],transactionHashVariant:TransactionHashVariant.LATEST_FINAL}) as Bond}
+export async function readBond(id:string):Promise<Bond>{return await reader.readContract({address:deployed(),functionName:'get_bond',args:[id],transactionHashVariant:TransactionHashVariant.LATEST_FINAL}) as unknown as Bond}
 export async function readAllBonds():Promise<Bond[]>{const ids=await readBondIds();return Promise.all(ids.map(readBond))}
 export async function walletAddress():Promise<string|null>{if(!window.ethereum)return null;const accounts=await window.ethereum.request({method:'eth_accounts'});return Array.isArray(accounts)&&typeof accounts[0]==='string'?accounts[0]:null}
 export async function connectWallet():Promise<string>{const provider=window.ethereum;if(!provider)throw new Error('Install a compatible browser wallet (for example MetaMask or Rabby).');const accounts=await provider.request({method:'eth_requestAccounts'});if(!Array.isArray(accounts)||typeof accounts[0]!=='string')throw new Error('Wallet did not return an account.');const client=createClient({chain,account:accounts[0] as `0x${string}`,provider:provider as never});await client.connect('studioDevnet');return accounts[0]}
@@ -25,7 +26,7 @@ export async function writeBond(functionName:string,args:unknown[]=[],value?:big
   const call={address:deployed(),functionName,args:args as never[],...(value!==undefined?{value}:{})};
   // Development-time profiling. Replace with committed calibrated fee profiles for launch.
   const estimate=await client.estimateTransactionFeesForWrite(call);
-  let txHash:`0x${string}`;
+  let txHash:TransactionHash;
   try{txHash=await client.writeContract({...call,fees:{distribution:estimate.distribution,feeValue:estimate.feeValue}})}
   catch(err){throw err}
   const submitted={hash:txHash,functionName,submittedAt:Date.now()};localStorage.setItem(pendingKey,JSON.stringify(submitted));onSubmitted?.(submitted);

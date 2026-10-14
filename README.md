@@ -64,15 +64,19 @@ cp frontend/.env.example frontend/.env
 
 With no contract address, the product intentionally disables all onchain writes and displays a *review mode* instead of faking live state. `/proof` contains four labeled fictional scenarios so reviewers can understand the intended decisions without connecting a wallet. `/app` is a strictly chain-backed registry when configured.
 
+The current Studio Dev release is recorded in [`deployments/studio-dev.json`](deployments/studio-dev.json). Its finalized deployment at `0xda342EB824689891E020D1A503F527bff9fC5F26` matches the local source byte-for-byte and exposes the expected nine-method schema. Keep the frontend address unset until Studio's contract-read endpoint is healthy and the live lifecycle receipts are recorded; its `gen_call` currently returns a server-side database error.
+
+For Studio Dev scripts, create an isolated environment with `python -m venv .deploy-venv`, then install the matching RC with `.deploy-venv/Scripts/python.exe -m pip install -r requirements-studio-dev.txt`. Use `.deploy-venv/Scripts/python.exe tools/studio_dev_deploy.py --wallet-file <local-test-wallet-file>` to deploy. It reads the selected private key into memory without printing or saving it. `tools/verify_studio_dev.py` verifies the finalized receipt, code hash and schema. The two-wallet lifecycle runner is `tools/studio_dev_lifecycle.py`; it stops before submitting writes when the manifest already records an unresolved transaction.
+
 ### GEN transfer and finality
 
 `fund_bond` is the only payable method. The JS adapter estimates protocol fees separately from its GEN deposit and waits for finalized successful execution before showing a transaction as complete. Once a write returns a hash, the app stores it before waiting and offers a finality-resume action after a timeout or reload; it blocks another write until the pending receipt is checked. Transfers are emitted at finalization, after internal claim state has been written.
 
-Studio supports consensus and simulated native transfers, but does not implement `@gl.evm.contract_interface` calls to EOAs. A Studio run can validate contract decisions and message construction; it cannot prove that the external GEN transfer child transaction paid its recipient. Verify transfer settlement on a network that supports those external messages before enabling real-value use. See [`deployments/studio-dev.json`](deployments/studio-dev.json) for the pending, explicitly unproven release record.
+Studio supports consensus and simulated native transfers, but does not implement `@gl.evm.contract_interface` calls to EOAs. It cannot prove that the external GEN transfer child transaction paid its recipient. A live bond claim and expiry release remain unverified; transfer settlement must be tested on a network that supports those external messages. The current read-call error and these transfer limits are recorded in [`deployments/studio-dev.json`](deployments/studio-dev.json).
 
 ## Source and release honesty
 
-- No score, audit result, validator execution, published production URL, or verified deployment is claimed here.
+- No audit result, production URL, live policy verdict or payout is claimed here. The Studio Dev deployment itself is verified; its lifecycle blocker is documented in the deployment manifest.
 - Document URL hashes attest content equality at render time, *not* source ownership or historical existence.
 - A service provider may control its current policy page; a neutral archived baseline with authenticated provenance is needed for stronger guarantees.
 - Consensus rejection may leave a transaction undecided rather than committing an `UNRESOLVED` state. Test this on the target network.
