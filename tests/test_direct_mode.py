@@ -13,6 +13,7 @@ import pytest
 
 
 BASELINE = "A committed service policy with four protected promises."
+CURRENT_POLICY = "Current policy text with a changed quota."
 BASELINE_URL = "https://archive.example.org/bermond/baseline.txt"
 LIVE_URL = "https://provider.example.org/policy"
 TERMS = {
@@ -37,6 +38,10 @@ def _classification(allowance: str) -> dict[str, object]:
                 "dimension": dimension,
                 "status": statuses[dimension],
                 "witness": "both",
+                "evidence": [
+                    {"source": "baseline", "quote": "A committed service policy", "sha256": hashlib.sha256(BASELINE.encode()).hexdigest()},
+                    {"source": "current", "quote": "Current policy text", "sha256": hashlib.sha256(CURRENT_POLICY.encode()).hexdigest()},
+                ],
                 "fact": "Compared against the committed baseline and current policy.",
             }
             for dimension in ("allowance", "retention", "refunds", "notice")
@@ -66,7 +71,7 @@ def _funded_contract(direct_vm, direct_deploy, direct_alice):
     contract.fund_bond("direct-web-001")
     direct_vm.value = 0
     direct_vm.mock_web("archive.example.org", {"status": 200, "body": BASELINE})
-    direct_vm.mock_web("provider.example.org", {"status": 200, "body": "Current policy text with a changed quota."})
+    direct_vm.mock_web("provider.example.org", {"status": 200, "body": CURRENT_POLICY})
     return contract
 
 

@@ -26,12 +26,17 @@ class FakeRecipient:
 class Provider:
     def __init__(self):
         self.body_by_url = {}
+        self.validator_body_by_url = {}
+        self.read_counts = {}
         self.answer = None
         self.validator_answer = None
     def render(self, url, mode='text'):
         return self.body_by_url[url]
     def get(self, url):
-        return types.SimpleNamespace(body=self.body_by_url[url].encode('utf-8'))
+        count = self.read_counts.get(url, 0)
+        self.read_counts[url] = count + 1
+        body = self.validator_body_by_url.get(url, self.body_by_url[url]) if count > 0 else self.body_by_url[url]
+        return types.SimpleNamespace(body=body.encode('utf-8'))
     def exec_prompt(self, prompt, response_format='json'):
         assert response_format == 'json'
         return self.answer
@@ -47,7 +52,8 @@ class FakeVM:
         result = leader()
         if self.disagree:
             raise RuntimeError('consensus mismatch')
-        assert validator(Return(result)), 'validator rejected'
+        candidate = self.provider.validator_answer if self.provider.validator_answer is not None else result
+        assert validator(Return(candidate)), 'validator rejected'
         return result
 
 @pytest.fixture

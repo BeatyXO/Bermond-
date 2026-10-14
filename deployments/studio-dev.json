@@ -187,7 +187,7 @@
   },
   "code_parity": "EXACT_BYTES_MATCH",
   "receipt_finality": "FINALIZED_SUCCESS",
-  "blocker": "Claim payout and expiry release paths both finalized successfully on Studio Dev and emitted the expected 1-GEN EOA transfer messages. Studio gen_call remains unhealthy, so authoritative post-write state reads and contract-level replay rejection cannot be queried. SDK semantic validation/Direct Mode remain blocked by the missing pinned py-genlayer runner artifact.",
+  "blocker": "The existing deployment remains source-matched to release SHA-256 b200f5138385219a3e9585ab442247f836922e5cea599013ecdc91881abd270d. The hardened working-tree contract has candidate SHA-256 e1987c6d5b2cff228025e5be8d20d570cd436e05f797569b66020906f0cc1554 and is not deployed. Redeploy only after pinned GenVM SDK validation and Direct Mode pass. Current latest GitHub Actions failure: pinned py-genlayer runner archive omits the required hash path; fake-runtime tests were skipped by workflow order. Studio state reads remain unavailable.",
   "studio_transfer_note": "Studio documents that @gl.evm.contract_interface calls to EOAs are not implemented; external GEN payout settlement requires a supporting network.",
   "cases": [
     {
@@ -1429,5 +1429,7 @@
       "successful": true,
       "runtime_error": null
     }
-  ]
+  ],
+  "candidate_contract_source_sha256": "e1987c6d5b2cff228025e5be8d20d570cd436e05f797569b66020906f0cc1554",
+  "candidate_deployment_status": "REDEPLOYMENT_REQUIRED_CONSENSUS_EVIDENCE_AND_ASSURANCE_CHANGES"
 }

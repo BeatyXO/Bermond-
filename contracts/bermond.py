@@ -20,6 +20,7 @@ MAX_BENEFICIARIES = 12
 MAX_DESCRIPTION = 640
 MAX_FACT = 600
 MAX_REASONING = 1600
+MAX_EVIDENCE_QUOTE = 240
 MAX_WEB = 32000
 MAX_PAYOUT = 10**22
 MAX_TERM_SECONDS = 366 * 86400
@@ -112,27 +113,51 @@ def parse_terms(json_text: str) -> dict[str, str]:
     return {key: validated_text(terms[key], key, 960) for key in DIMENSIONS}
 
 
-def validate_semantics(value: Any) -> dict[str, Any]:
+def _normalized_quote(value: str) -> str:
+    return ' '.join(value.split()).casefold()
+
+
+def validate_semantics(value: Any, baseline_body: str | None = None,
+                       current_body: str | None = None) -> dict[str, Any]:
     require(type(value) is dict and set(value) == {'criteria', 'reasoning'}, 'semantic shape rejected')
     require(type(value['reasoning']) is str and 1 <= len(value['reasoning']) <= MAX_REASONING, 'reasoning invalid')
     criteria = value['criteria']
     require(type(criteria) is list and len(criteria) == len(DIMENSIONS), 'four criteria required')
     ordered: dict[str, dict[str, str]] = {}
     for item in criteria:
-        require(type(item) is dict and set(item) == {'dimension', 'status', 'witness', 'fact'}, 'criterion has illegal keys')
+        require(type(item) is dict and set(item) == {'dimension', 'status', 'witness', 'fact', 'evidence'}, 'criterion has illegal keys')
         key, status, witness, fact = item['dimension'], item['status'], item['witness'], item['fact']
         require(type(key) is str and key in DIMENSIONS and key not in ordered, 'unknown/duplicate dimension')
         require(type(status) is str and status in VERDICTS, 'status illegal')
         require(type(witness) is str and witness in ('baseline', 'current', 'both', 'none'), 'invalid witness')
         require(type(fact) is str and 1 <= len(fact) <= MAX_FACT, 'fact invalid')
         require(status != 'BREACHED' or witness in ('current', 'both'), 'breach needs current-source witness')
-        ordered[key] = {'dimension': key, 'status': status, 'witness': witness, 'fact': fact}
+        evidence = item['evidence']
+        require(type(evidence) is list and len(evidence) <= 2, 'evidence must contain at most two source quotes')
+        normalized_evidence: list[dict[str, str]] = []
+        seen_sources: set[str] = set()
+        for citation in evidence:
+            require(type(citation) is dict and set(citation) == {'source', 'quote', 'sha256'}, 'invalid evidence citation')
+            source, quote, source_hash = citation['source'], citation['quote'], citation['sha256']
+            require(source in ('baseline', 'current') and source not in seen_sources, 'invalid/duplicate evidence source')
+            require(type(quote) is str and 1 <= len(quote.strip()) <= MAX_EVIDENCE_QUOTE, 'evidence quote invalid')
+            require(type(source_hash) is str and len(source_hash) == 64 and all(c in '0123456789abcdef' for c in source_hash), 'evidence source hash invalid')
+            body = baseline_body if source == 'baseline' else current_body
+            if body is not None:
+                require(_normalized_quote(quote) in _normalized_quote(body), 'evidence quote is not present in cited source')
+                actual_hash = hashlib.sha256(body.encode('utf-8')).hexdigest()
+                require(source_hash == actual_hash, 'evidence source hash mismatch')
+            seen_sources.add(source)
+            normalized_evidence.append({'source': source, 'quote': _normalized_quote(quote), 'sha256': source_hash})
+        require(set(seen_sources) == (set() if witness == 'none' else set(('baseline', 'current') if witness == 'both' else (witness,))), 'witness does not match cited evidence')
+        require(status == 'UNRESOLVED' or bool(normalized_evidence), 'resolved finding requires source evidence')
+        ordered[key] = {'dimension': key, 'status': status, 'witness': witness, 'evidence': normalized_evidence, 'fact': fact}
     require(set(ordered) == set(DIMENSIONS), 'criteria missing')
     return {'criteria': [ordered[d] for d in DIMENSIONS], 'reasoning': value['reasoning']}
 
 
 def comparison_core(result: dict[str, Any]) -> list[list[str]]:
-    return [[i['dimension'], i['status']] for i in result['criteria']]
+    return [[i['dimension'], i['status'], i['witness'], canonical(i['evidence'])] for i in result['criteria']]
 
 
 def derived_verdict(result: dict[str, Any]) -> str:
@@ -145,7 +170,7 @@ def derived_verdict(result: dict[str, Any]) -> str:
 
 
 def unresolved(reason: str) -> dict[str, Any]:
-    return {'criteria': [{'dimension': d, 'status': 'UNRESOLVED', 'witness': 'none', 'fact': 'Required policy evidence could not be independently verified.'} for d in DIMENSIONS], 'reasoning': reason}
+    return {'criteria': [{'dimension': d, 'status': 'UNRESOLVED', 'witness': 'none', 'evidence': [], 'fact': 'Required policy evidence could not be independently verified.'} for d in DIMENSIONS], 'reasoning': reason}
 
 
 def read_evidence(url: str, expected_sha: str = '') -> dict[str, str] | None:
@@ -197,8 +222,10 @@ def policy_prompt(record: dict[str, Any], baseline: dict[str, str], current: dic
         'No model may choose money, beneficiaries, contract state, or transaction action. '
         'Use conservative interpretations: ambiguity is UNRESOLVED, not BREACHED. '
         'Return JSON with exactly keys criteria and reasoning. criteria has exactly four objects each with '
-        'dimension, status, witness (baseline/current/both/none), fact; order is allowance, retention, refunds, notice. '
-        'BREACHED must cite a current or both witness. reasoning and fact are limited factual summaries.\n'
+        'dimension, status, witness (baseline/current/both/none), evidence, fact; order is allowance, retention, refunds, notice. '
+        'evidence is a list of at most two objects {source: baseline|current, quote: exact short verbatim excerpt, sha256: the source sha256 shown in the input}; cite every source named by witness. '
+        'A resolved classification requires a quote from its witness source(s); UNRESOLVED may use witness none and empty evidence. '
+        'BREACHED must cite current or both. Quotes must be exact source text, not paraphrases. reasoning and fact are limited factual summaries.\n'
         'BERMOND_UNTRUSTED_DATA_BEGIN\n' + canonical(safe) + '\nBERMOND_UNTRUSTED_DATA_END'
     )
 
@@ -245,6 +272,11 @@ class Bermond(Contract):
         record: dict[str, Any] = {
             'id': bond_id, 'provider': provider, 'service_name': validated_text(service_name, 'service', 96),
             'category': validated_text(category, 'category', 48),
+            'evidence_assurance': {
+                'baseline': 'PROVIDER_SELF_ATTESTED_HASH',
+                'current_policy': 'URL_CONTENT_UNAUTHENTICATED',
+                'historical_authenticity': 'UNVERIFIED',
+            },
             'baseline_url': validated_url(baseline_url), 'baseline_sha256': validated_hash(baseline_sha256),
             'live_url': validated_url(live_url), 'terms': terms, 'payout_wei': amount,
             'coverage_ends': end, 'claim_deadline': grace, 'created_at': start,
@@ -304,15 +336,17 @@ class Bermond(Contract):
             if not isinstance(candidate, gl.vm.Return):
                 return False
             try:
-                received = validate_semantics(candidate.calldata)
                 frozen = read_evidence(record['baseline_url'], record['baseline_sha256'])
                 latest = read_evidence(record['live_url'])
                 issue = evidence_issue(frozen, latest)
                 if issue:
                     local = unresolved(issue)
+                    received = validate_semantics(candidate.calldata)
                 else:
+                    received = validate_semantics(candidate.calldata, frozen['body'], latest['body'])
                     local = gl.nondet.exec_prompt(policy_prompt(record, frozen, latest), response_format='json')
-                return comparison_core(received) == comparison_core(validate_semantics(local))
+                    local = validate_semantics(local, frozen['body'], latest['body'])
+                return comparison_core(received) == comparison_core(local)
             except Exception:
                 return False
 

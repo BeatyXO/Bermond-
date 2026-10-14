@@ -25,7 +25,8 @@ def test_read_evidence_rejects_raw_byte_hash_mismatch(env):
 
 def answer(statuses=None, **kw):
     statuses = statuses or ['UNCHANGED'] * 4
-    return {'criteria': [{'dimension': d, 'status': s, 'witness': 'both', 'fact': 'Policy comparison based on both committed sources.'} for d, s in zip(DIMENSIONS, statuses)], 'reasoning': 'Independent semantic classification.' , **kw}
+    digest = hashlib.sha256(BASE.encode()).hexdigest()
+    return {'criteria': [{'dimension': d, 'status': s, 'witness': 'both', 'evidence': [{'source': 'baseline', 'quote': 'Service allows 100000 API calls.', 'sha256': digest}, {'source': 'current', 'quote': 'Service allows 100000 API calls.', 'sha256': digest}], 'fact': 'Policy comparison based on both committed sources.'} for d, s in zip(DIMENSIONS, statuses)], 'reasoning': 'Independent semantic classification.' , **kw}
 
 
 def create(env, subscribers=2, payout=1000, bond_id='bond-123'):
@@ -76,6 +77,27 @@ def test_subscriber_capacity_is_twelve(env):
         bond.enroll_subscriber('bond-capacity', ADDRS[13])
 
 
+def test_maximum_payout_and_twelve_beneficiary_reserve(env):
+    payout = env.mod.MAX_PAYOUT
+    bond = env.mod.Bermond()
+    terms = {d: 'Protect ' + d for d in DIMENSIONS}
+    bond.create_bond('bond-max-payout', 'Orion', 'API', B_URL, hashlib.sha256(BASE.encode()).hexdigest(), L_URL,
+        json.dumps(terms), payout, env.time['now'] + 10_000, env.time['now'] + 20_000)
+    for address in ADDRS[1:13]:
+        bond.enroll_subscriber('bond-max-payout', address)
+    env.gl.message.value = payout * 12
+    bond.fund_bond('bond-max-payout')
+    assert bond.get_bond('bond-max-payout')['reserved_wei'] == payout * 12
+
+
+def test_payout_above_contract_maximum_is_rejected(env):
+    terms = {d: 'Protect ' + d for d in DIMENSIONS}
+    with pytest.raises(Revert, match='payout out of range'):
+        env.mod.Bermond().create_bond('bond-over-payout', 'Orion', 'API', B_URL,
+            hashlib.sha256(BASE.encode()).hexdigest(), L_URL, json.dumps(terms), env.mod.MAX_PAYOUT + 1,
+            env.time['now'] + 10_000, env.time['now'] + 20_000)
+
+
 def test_exact_collateral_and_enrollment_freeze(env):
     bond = create(env)
     assert bond.get_bond('bond-123')['reserved_wei'] == 2000
@@ -118,6 +140,16 @@ def test_material_breach_one_shot_payment(env):
     with pytest.raises(Revert, match='already paid'):
         bond.claim_compensation('bond-123')
     assert bond.get_bond('bond-123')['reserved_wei'] == 1000
+
+
+def test_claim_is_allowed_at_inclusive_deadline_boundary(env):
+    bond = create(env, subscribers=1)
+    env.provider.answer = answer(['BREACHED', 'UNCHANGED', 'UNCHANGED', 'UNCHANGED'])
+    bond.check_policy('bond-123')
+    env.time['now'] += 20_000
+    env.gl.message.sender_address = ADDRS[1]
+    bond.claim_compensation('bond-123')
+    assert env.transfers == [(ADDRS[1], 1000)]
 
 
 def test_unenrolled_cannot_claim(env):
@@ -227,6 +259,45 @@ def test_duplicate_semantic_dimensions_blocked(env):
     payload['criteria'][0]['dimension'] = 'retention'
     with pytest.raises(Revert):
         env.mod.validate_semantics(payload)
+
+
+def test_decision_evidence_must_be_verbatim_in_cited_source(env):
+    payload = answer()
+    env.provider.body_by_url = {B_URL: BASE, L_URL: CURRENT}
+    payload['criteria'][0]['evidence'][1]['quote'] = 'provider policy says breach'
+    with pytest.raises(Revert, match='not present'):
+        env.mod.validate_semantics(payload, BASE, CURRENT)
+
+
+def test_consensus_core_includes_witness_and_evidence(env):
+    left = env.mod.validate_semantics(answer())
+    right_payload = answer()
+    right_payload['criteria'][0]['evidence'][1]['quote'] = 'Retention 30 days.'
+    right = env.mod.validate_semantics(right_payload)
+    assert env.mod.comparison_core(left) != env.mod.comparison_core(right)
+
+
+def test_evidence_digest_must_match_fetched_source(env):
+    payload = answer()
+    with pytest.raises(Revert, match='hash mismatch'):
+        env.mod.validate_semantics(payload, BASE, CURRENT + ' changed')
+
+
+def test_validator_cannot_accept_same_verdict_with_different_evidence(env):
+    bond = create(env)
+    alternate = answer(['BREACHED', 'UNCHANGED', 'UNCHANGED', 'UNCHANGED'])
+    env.provider.validator_answer = alternate
+    result = bond.check_policy('bond-123')
+    assert result['verdict'] == 'UNRESOLVED'
+    assert env.transfers == []
+
+
+def test_current_source_change_between_leader_and_validator_fails_closed(env):
+    bond = create(env)
+    env.provider.validator_body_by_url[L_URL] = CURRENT + ' changed after leader fetch.'
+    result = bond.check_policy('bond-123')
+    assert result['verdict'] == 'UNRESOLVED'
+    assert env.transfers == []
 
 
 def test_multiple_compliant_checks_dont_finalize_early(env):

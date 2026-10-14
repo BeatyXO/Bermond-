@@ -1,9 +1,10 @@
 export type Dimension = 'allowance' | 'retention' | 'refunds' | 'notice';
 export type ClauseStatus = 'UNCHANGED' | 'IMPROVED' | 'BREACHED' | 'UNRESOLVED';
 export type BondStatus = 'DRAFT' | 'ACTIVE' | 'UNRESOLVED' | 'BREACHED' | 'CLOSED';
-export interface Clause {dimension:Dimension;status:ClauseStatus;witness:string;fact:string}
+export interface EvidenceReference {source:'baseline'|'current';quote:string;sha256:string}
+export interface Clause {dimension:Dimension;status:ClauseStatus;witness:string;evidence?:EvidenceReference[];fact:string}
 export interface Assessment {criteria:Clause[];reasoning:string}
-export interface Bond {id:string;service_name:string;category:string;provider:string;baseline_url:string;baseline_sha256:string;live_url:string;terms:Record<Dimension,string>;payout_wei:number|string;coverage_ends:number;claim_deadline:number;created_at:number;subscribers:string[];claimed:string[];reserved_wei:number|string;state:BondStatus;checks:number;last_verdict:string;last_result:Assessment|null;last_check_at:number;policy_fingerprint:string;last_fingerprint:string;released_wei:number|string}
+export interface Bond {id:string;service_name:string;category:string;provider:string;evidence_assurance?:{baseline:string;current_policy:string;historical_authenticity:string};baseline_url:string;baseline_sha256:string;live_url:string;terms:Record<Dimension,string>;payout_wei:number|string;coverage_ends:number;claim_deadline:number;created_at:number;subscribers:string[];claimed:string[];reserved_wei:number|string;state:BondStatus;checks:number;last_verdict:string;last_result:Assessment|null;last_check_at:number;policy_fingerprint:string;last_fingerprint:string;released_wei:number|string}
 export const DIMENSIONS:Dimension[]=['allowance','retention','refunds','notice'];
 export const dimensionName:Record<Dimension,string>={allowance:'Service allowance',retention:'Data retention',refunds:'Refund rights',notice:'Change notice'};
 export function formatGen(input:bigint | number | string,precision=3):string{try{const raw=BigInt(input);const whole=raw/10n**18n;const dec=(raw%10n**18n).toString().padStart(18,'0').slice(0,precision).replace(/0+$/,'');return `${whole}${dec?'.'+dec:''} GEN`;}catch{return '— GEN'}}

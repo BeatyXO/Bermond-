@@ -2,8 +2,9 @@
 
 | Threat | Implemented defense | Remaining exposure |
 |---|---|---|
-| Prompt injection in policy text | Evidence is declared untrusted, output strict-schema validated, no model-supplied recipients/amounts | Model may still misclassify. Appeal/investigate |
-| Baseline content replacement | Mandatory SHA-256 commitment, independently re-fetch | Hash alone does not establish provenance or URL ownership |
+| Prompt injection in policy text | Evidence is declared untrusted; each resolved clause must cite an exact bounded excerpt and matching source SHA-256; validators independently fetch and classify; contract controls all amounts and recipients | Model may still misclassify or validators may collude. Agreement reduces, but cannot eliminate, semantic error |
+| Baseline content replacement | Mandatory provider-self-attested SHA-256 commitment; validators re-fetch and verify exact source bytes; findings bind their excerpt to source digest | Hash alone does not establish issuer authority or historical existence. Both remain explicitly unverified |
+| Publisher and evidence provenance | Contract records the assurance level as provider self-attestation; UI states current publisher authentication and historical authenticity are unverified | No decentralized publisher-signature or trusted archive proof is available in this release; do not market the sources as authenticated |
 | Source unavailable | Deterministic `UNRESOLVED` assessment; cannot authorize payout | If unavailable to validators, consensus can fail before contract state commits |
 | Provider unilaterally removes subscribers | Subscribers only enrolled during `DRAFT`, frozen on exact funding | Provider chooses original beneficiaries; may register unrelated wallets |
 | Replay/double payout | `claimed` wallet list, state update before transfer, explicit reserve reduction | Verify native-transfer implementation on Studio and network |
@@ -11,7 +12,7 @@
 | Underfunded escrow | Exact payable amount required, reserve per bond | Audit global balance liabilities after fee accounting |
 | Unlimited input/CPU | Document, clause, ID, URL, bond and subscriber bounds | Need runtime gas and storage profiling |
 | Wrong chain/contract | Frontend Studio Dev pin + empty address fails closed | Verify deployment source hash, contract address, SDK version |
-| Rejected consensus | No payout authorized from failed execution | Real network may leave transaction undetermined; cannot force `UNRESOLVED` receipt |
+| Rejected consensus | Validator agreement includes per-dimension status, witness source, exact normalized excerpt, and full SHA-256 of the cited baseline/current document; disagreement cannot authorize a breach | Real network may leave transaction undetermined; cannot force `UNRESOLVED` receipt. Semantic validation and Direct Mode remain blocked while the pinned runner artifact is unavailable |
 | Claim after coverage closes | Claim deadline enforced with transaction-pinned timestamp | Long delay, clock semantics on target GenVM need verification |
 | Arbitrary external links | Validated HTTPS URL and bounded fetch | DNS rebinding, redirects, web renderer trust require live tests |
 

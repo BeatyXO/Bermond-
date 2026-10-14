@@ -18,6 +18,7 @@ jobs:
       - name: GenVM lint and SDK validation
         run: genvm-lint check contracts/bermond.py
       - name: Fake-runtime and GenLayer Direct Mode tests
+        if: always()
         run: python -m pytest -q tests
   frontend:
     runs-on: ubuntu-latest
