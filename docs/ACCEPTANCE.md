@@ -38,7 +38,8 @@ Status markers: [x] static/source artifact present, [ ] requires runtime/live ve
 - [ ] Scenario B: replay claim is blocked
 - [ ] Scenario C: unavailable/mismatched evidence (`UNRESOLVED`), no payout
 - [ ] Scenario D: improved retention (`COMPLIANT`), no payout
-- [ ] Scenario E: expiry release returns only unused GEN, attempts to withdraw twice blocked
+- [x] Scenario E: expiry `release_collateral` finalized and emitted the unused 1-GEN collateral back to provider
+- [x] Scenario E: lifecycle runner refused a second release after finalization; on-chain replay guard not independently queried
 - [x] Capture finalized transaction hashes, receipts, and emitted 1-GEN transfer
 - [ ] Read authoritative post-write state after Studio `gen_call` recovers
 - [ ] Publish wallet-free proof paths with live cards bound to exact contract IDs
@@ -55,4 +56,6 @@ Status markers: [x] static/source artifact present, [ ] requires runtime/live ve
 - `npm run typecheck`: passed; `npm run build`: passed (Vite reports the main JS chunk exceeds 500 kB); `npm test`: **3 passed**.
 - Studio Dev chain ID `61997`: deployment `0x134140ee9918c4fef5c5e210435b0d952d58430df4ef8f36be871d26cdc4ede7`, finalized `FINISHED_WITH_RETURN`, contract `0xd2E64c15268edE3EfA637DD09496beC9c9F795C3`. `gen_getContractCode` returned exact local bytes, SHA-256 `b200f5138385219a3e9585ab442247f836922e5cea599013ecdc91881abd270d`; `gen_getContractSchema` exposes all nine expected methods.
 - A real 1-GEN lifecycle finalized successfully through `create_bond`, `enroll_subscriber`, `fund_bond`, `check_policy` (`BREACHED`), and `claim_compensation`. The claim receipt contains a finalized EOA transfer message for `1000000000000000000` wei; the beneficiary's public balance increased by approximately 1 GEN net of intervening test fees. Receipt hashes are recorded in `deployments/studio-dev.json`.
-- Studio's `gen_call` still returns `-32603` with SQLAlchemy `Can't reconnect until invalid transaction is rolled back`, so authoritative post-write state reads are unavailable. Expiry release has not been tested; it requires waiting past the claim deadline.
+- Expiry release test bond `studio-release-1791968775` matured past its deadline. Its provider `release_collateral` transaction `0xeb4965a939072756f93c7acf999e3848789c87d95b9277ff6260889e4f513352` finalized successfully and emitted a 1-GEN finalized transfer to the provider. The runner rejected a repeated release locally.
+- Studio's `gen_call` still returns `-32603` with SQLAlchemy `Can't reconnect until invalid transaction is rolled back`, so authoritative post-write state reads and the contract-level duplicate-release guard cannot be independently queried. GenVM SDK validation and Direct Mode tests fail before execution because the pinned `py-genlayer` runner artifact is absent from the local cached runner archive.
+- Local browser review covered the overview, all four proof-lab cases, create-form steps, unconfigured safe mode, and configured registry error handling. At 393px viewport, document width was 378px with no horizontal overflow; navigation and case accordion controls are keyboard-focusable. The Studio registry exposes the read RPC failure clearly. No connected-wallet write was submitted through the browser.

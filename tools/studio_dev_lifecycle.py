@@ -120,6 +120,8 @@ def main() -> int:
     parser.add_argument("--beneficiary-label", default="Tenant 1")
     parser.add_argument("--resume", action="store_true", help="Finalize the already-recorded transaction and exit without resubmitting it.")
     parser.add_argument("--resume-case", help="Continue missing lifecycle steps for an existing test bond.")
+    parser.add_argument("--release-test", action="store_true", help="Create and fund an ACTIVE 1-GEN bond for expiry-release testing.")
+    parser.add_argument("--release-case", help="Release an existing expiry-test bond after its claim deadline.")
     args = parser.parse_args()
 
     manifest = read_manifest()
@@ -157,6 +159,22 @@ def main() -> int:
         write_manifest(manifest)
         print(f"resumed {pending.get('function')}: success={str(success).lower()} execution={execution}")
         return 0 if success else 1
+    if args.release_case:
+        case = next((item for item in manifest.get("live_cases", []) if item.get("id") == args.release_case), None)
+        if not case:
+            raise RuntimeError(f"Unknown live release test bond {args.release_case!r}.")
+        if case.get("state") == "RELEASE_FINALIZED":
+            raise RuntimeError("This release test already finalized; refusing a duplicate release.")
+        deadline = int(case["claim_deadline"])
+        if int(time.time()) <= deadline:
+            raise RuntimeError(f"Claim deadline has not passed; release eligible after {deadline} UTC.")
+        receipt = submit(client, provider, address, "release_collateral", [args.release_case])
+        manifest = read_manifest()
+        case = next(item for item in manifest.get("live_cases", []) if item.get("id") == args.release_case)
+        case["state"] = "RELEASE_FINALIZED" if receipt["successful"] else "RELEASE_FAILED"
+        case["release_receipt"] = receipt
+        write_manifest(manifest)
+        return 0 if receipt["successful"] else 1
     if args.resume_case:
         case = next((item for item in manifest.get("live_cases", []) if item.get("id") == args.resume_case), None)
         if not case:
@@ -204,12 +222,12 @@ def main() -> int:
     # Git's Windows checkout may convert committed LF to CRLF, but the pinned
     # raw GitHub URL serves LF bytes. Commit the hash of the URL's byte form.
     baseline_hash = hashlib.sha256(baseline.replace(b"\r\n", b"\n")).hexdigest()
-    bond_id = f"studio-breach-{int(time.time())}"
+    bond_id = f"studio-release-{int(time.time())}" if args.release_test else f"studio-breach-{int(time.time())}"
     now = int(time.time())
     # Leave room for transaction finalization before the contract's strict
     # one-hour minimum coverage duration begins at create_bond execution.
-    coverage_ends = now + 4200
-    claim_deadline = coverage_ends + 60
+    coverage_ends = now + (3700 if args.release_test else 4200)
+    claim_deadline = coverage_ends + (1 if args.release_test else 60)
     terms = {
         "allowance": "At least 100000 API requests per calendar month.",
         "retention": "Delete customer data within 30 days after service ends.",
@@ -219,7 +237,7 @@ def main() -> int:
     manifest.setdefault("live_cases", []).append(
         {
             "id": bond_id,
-            "expected": "BREACHED",
+            "expected": "ACTIVE_RELEASE" if args.release_test else "BREACHED",
             "baseline_url": f"{FIXTURE_BASE}/baseline.txt",
             "current_url": f"{FIXTURE_BASE}/breached.txt",
             "provider": provider.address,
@@ -246,6 +264,19 @@ def main() -> int:
     receipts.append(submit(client, provider, address, "create_bond", call_args))
     receipts.append(submit(client, provider, address, "enroll_subscriber", [bond_id, beneficiary.address]))
     receipts.append(submit(client, provider, address, "fund_bond", [bond_id], PAYOUT_WEI))
+    if args.release_test:
+        manifest = read_manifest()
+        for case in manifest.get("live_cases", []):
+            if case["id"] == bond_id:
+                case["receipts"] = [item for item in manifest.get("lifecycle_transactions", []) if item.get("bond_id") == bond_id]
+                case["state"] = "ACTIVE_RELEASE_WAIT"
+                case["claim_deadline"] = claim_deadline
+                case["release_eligible_after"] = claim_deadline + 1
+        manifest["blocker"] = "Expiry release test bond is active and funded; run --release-case after its recorded deadline."
+        write_manifest(manifest)
+        print(f"bond_id={bond_id}")
+        print(f"claim_deadline={claim_deadline}")
+        return 0
     receipts.append(submit(client, beneficiary, address, "check_policy", [bond_id]))
 
     bond = None

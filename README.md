@@ -72,11 +72,11 @@ For Studio Dev scripts, create an isolated environment with `python -m venv .dep
 
 `fund_bond` is the only payable method. The JS adapter estimates protocol fees separately from its GEN deposit and waits for finalized successful execution before showing a transaction as complete. Once a write returns a hash, the app stores it before waiting and offers a finality-resume action after a timeout or reload; it blocks another write until the pending receipt is checked. Transfers are emitted at finalization, after internal claim state has been written.
 
-The external EOA transfer uses `@gl.evm.contract_interface` and finalizes implicitly; it must not receive an `on` argument. The live claim finalized successfully and its receipt includes a 1-GEN finalized transfer message. Expiry release remains unverified and requires waiting past the claim deadline. The RPC read-call error and transaction evidence are recorded in [`deployments/studio-dev.json`](deployments/studio-dev.json).
+The external EOA transfer uses `@gl.evm.contract_interface` and finalizes implicitly; it must not receive an `on` argument. Both the live claim and expiry release finalized successfully and emitted 1-GEN transfers to their expected recipients. The RPC read-call error and transaction evidence are recorded in [`deployments/studio-dev.json`](deployments/studio-dev.json).
 
 ## Source and release honesty
 
-- No audit result, production URL, live policy verdict or payout is claimed here. The Studio Dev deployment itself is verified; its lifecycle blocker is documented in the deployment manifest.
+- This is still a development deployment, not a production launch. Studio's state-read RPC and pinned-runner validation remain outstanding; see the deployment manifest for exact evidence.
 - Document URL hashes attest content equality at render time, *not* source ownership or historical existence.
 - A service provider may control its current policy page; a neutral archived baseline with authenticated provenance is needed for stronger guarantees.
 - Consensus rejection may leave a transaction undecided rather than committing an `UNRESOLVED` state. Test this on the target network.

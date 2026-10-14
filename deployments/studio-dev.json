@@ -187,7 +187,7 @@
   },
   "code_parity": "EXACT_BYTES_MATCH",
   "receipt_finality": "FINALIZED_SUCCESS",
-  "blocker": "Full create/enroll/fund/BREACHED-check/claim lifecycle succeeded on the verified deployment. Claim emitted the finalized 1-GEN EOA transfer; beneficiary balance increased by approximately 1 GEN net across the test window. Studio gen_call remains unhealthy, and expiry release is not yet tested.",
+  "blocker": "Claim payout and expiry release paths both finalized successfully on Studio Dev and emitted the expected 1-GEN EOA transfer messages. Studio gen_call remains unhealthy, so authoritative post-write state reads and contract-level replay rejection cannot be queried. SDK semantic validation/Direct Mode remain blocked by the missing pinned py-genlayer runner artifact.",
   "studio_transfer_note": "Studio documents that @gl.evm.contract_interface calls to EOAs are not implemented; external GEN payout settlement requires a supporting network.",
   "cases": [
     {
@@ -882,6 +882,88 @@
         "parent_transaction": "0xd340a52be58270f4a9a801dd49492b157f4fa1f56f929a06a2ab9144c2af83fd",
         "settlement": "Finalized 1-GEN EOA transfer message emitted; beneficiary public balance changed from 199999121386749991245 wei to 200998752720249987953 wei (+999631333499996708 wei net across intervening test transactions)."
       }
+    },
+    {
+      "id": "studio-release-1791968775",
+      "expected": "ACTIVE_RELEASE",
+      "baseline_url": "https://raw.githubusercontent.com/BeatyXO/Bermond-/a9eab6aa2be30d81c8d296e38a9f8ef366f64761/deployments/fixtures/baseline.txt",
+      "current_url": "https://raw.githubusercontent.com/BeatyXO/Bermond-/a9eab6aa2be30d81c8d296e38a9f8ef366f64761/deployments/fixtures/breached.txt",
+      "provider": "0xD6423aE82a975d55C6CeaC222827A727325e0459",
+      "beneficiary": "0x39680bd423437C0Eaa18493629652821Ec672C61",
+      "payout_wei": 1000000000000000000,
+      "receipts": [
+        {
+          "function": "create_bond",
+          "bond_id": "studio-release-1791968775",
+          "hash": "0x976312b308e2885aa6d60876437607dbc91c3a402042e82bc0e9d6996c899c57",
+          "status": {
+            "state": "finalized",
+            "outcome": "accepted"
+          },
+          "execution_result": "FINISHED_WITH_RETURN",
+          "successful": true,
+          "runtime_error": null
+        },
+        {
+          "function": "enroll_subscriber",
+          "bond_id": "studio-release-1791968775",
+          "hash": "0x3f6495aeef688492df3d4dccbf726295cdde579d85689610cd45dd38ca6461be",
+          "status": {
+            "state": "finalized",
+            "outcome": "accepted"
+          },
+          "execution_result": "FINISHED_WITH_RETURN",
+          "successful": true,
+          "runtime_error": null
+        },
+        {
+          "function": "fund_bond",
+          "bond_id": "studio-release-1791968775",
+          "hash": "0x1ad0d3f0ec0ef1a6559ff2d4c04e37a9901b0c32e76f62f76408b5e6595e0107",
+          "status": {
+            "state": "finalized",
+            "outcome": "accepted"
+          },
+          "execution_result": "FINISHED_WITH_RETURN",
+          "successful": true,
+          "runtime_error": null
+        },
+        {
+          "function": "release_collateral",
+          "bond_id": "studio-release-1791968775",
+          "hash": "0xeb4965a939072756f93c7acf999e3848789c87d95b9277ff6260889e4f513352",
+          "status": {
+            "state": "finalized",
+            "outcome": "accepted"
+          },
+          "execution_result": "FINISHED_WITH_RETURN",
+          "successful": true,
+          "runtime_error": null
+        }
+      ],
+      "state": "RELEASE_FINALIZED",
+      "claim_deadline": 1791972476,
+      "release_eligible_after": 1791972477,
+      "release_receipt": {
+        "function": "release_collateral",
+        "bond_id": "studio-release-1791968775",
+        "hash": "0xeb4965a939072756f93c7acf999e3848789c87d95b9277ff6260889e4f513352",
+        "status": {
+          "state": "finalized",
+          "outcome": "accepted"
+        },
+        "execution_result": "FINISHED_WITH_RETURN",
+        "successful": true,
+        "runtime_error": null
+      },
+      "release_transfer": {
+        "amount_wei": 1000000000000000000,
+        "recipient": "0xD6423aE82a975d55C6CeaC222827A727325e0459",
+        "emitted_on": "finalized",
+        "transaction": "0xeb4965a939072756f93c7acf999e3848789c87d95b9277ff6260889e4f513352",
+        "execution_result": "FINISHED_WITH_RETURN",
+        "second_release_guard": "rejected locally before submission"
+      }
     }
   ],
   "lifecycle_transactions": [
@@ -1291,6 +1373,54 @@
       "function": "claim_compensation",
       "bond_id": "studio-breach-1791965119",
       "hash": "0xd340a52be58270f4a9a801dd49492b157f4fa1f56f929a06a2ab9144c2af83fd",
+      "status": {
+        "state": "finalized",
+        "outcome": "accepted"
+      },
+      "execution_result": "FINISHED_WITH_RETURN",
+      "successful": true,
+      "runtime_error": null
+    },
+    {
+      "function": "create_bond",
+      "bond_id": "studio-release-1791968775",
+      "hash": "0x976312b308e2885aa6d60876437607dbc91c3a402042e82bc0e9d6996c899c57",
+      "status": {
+        "state": "finalized",
+        "outcome": "accepted"
+      },
+      "execution_result": "FINISHED_WITH_RETURN",
+      "successful": true,
+      "runtime_error": null
+    },
+    {
+      "function": "enroll_subscriber",
+      "bond_id": "studio-release-1791968775",
+      "hash": "0x3f6495aeef688492df3d4dccbf726295cdde579d85689610cd45dd38ca6461be",
+      "status": {
+        "state": "finalized",
+        "outcome": "accepted"
+      },
+      "execution_result": "FINISHED_WITH_RETURN",
+      "successful": true,
+      "runtime_error": null
+    },
+    {
+      "function": "fund_bond",
+      "bond_id": "studio-release-1791968775",
+      "hash": "0x1ad0d3f0ec0ef1a6559ff2d4c04e37a9901b0c32e76f62f76408b5e6595e0107",
+      "status": {
+        "state": "finalized",
+        "outcome": "accepted"
+      },
+      "execution_result": "FINISHED_WITH_RETURN",
+      "successful": true,
+      "runtime_error": null
+    },
+    {
+      "function": "release_collateral",
+      "bond_id": "studio-release-1791968775",
+      "hash": "0xeb4965a939072756f93c7acf999e3848789c87d95b9277ff6260889e4f513352",
       "status": {
         "state": "finalized",
         "outcome": "accepted"
