@@ -37,7 +37,7 @@ Writes: `create_bond`, `enroll_subscriber`, `accept_bond`, `fund_bond` (payable)
 
 Views: `get_bond`, `get_bond_ids`, `get_claim_status`.
 
-The current candidate therefore has ten schema methods. Its required `py-genlayer` dependency remains pinned in the contract header. The older deployed source has a different, nine-method schema and does not implement beneficiary acceptance or pending-transfer accounting.
+The deployed source therefore has ten schema methods. Its required `py-genlayer` dependency remains pinned in the contract header. The earlier deployment has a different, nine-method schema and does not implement beneficiary acceptance or pending-transfer accounting.
 
 ## Financial accounting
 
@@ -65,4 +65,4 @@ There is no autonomous monitor or keeper service. Beneficiaries, providers, or a
 - GenLayer Direct Mode executes the contract with GenVM and mocked nondeterministic web/LLM responses. It is not network consensus.
 - `genvm-lint check` runs the official linter and SDK semantic validation for the selected runtime family.
 - Browser tests and type/build checks validate the frontend, not contract settlement.
-- Studio deployment and finalized transaction receipts are separate evidence. The preserved deployment and receipts are for an earlier source SHA; the current candidate is not deployed.
+- Studio deployment and finalized transaction receipts are separate evidence. The current source is deployed at `0x50039c8Aa426aF3e2F3Cc2DB0677BdfaC5c57A37` on chain `61997` with exact source-byte parity. Two live policy checks nevertheless finalized as `undetermined` after validator disagreement; no breach or payout was accepted. The current live lifecycle and expiry release remain incomplete.

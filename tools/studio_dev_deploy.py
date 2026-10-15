@@ -15,10 +15,13 @@ from eth_account import Account
 from genlayer_py import create_client, studio_devnet
 from genlayer_py.assertions import tx_execution_succeeded
 from genlayer_py.types import TransactionHashVariant
+from tx_status import accepted_finalized_execution
 
 ROOT = Path(__file__).resolve().parents[1]
 CONTRACT = ROOT / "contracts" / "bermond.py"
 MANIFEST = ROOT / "deployments" / "studio-dev.json"
+FINALIZATION_POLL_INTERVAL_MS = 5_000
+FINALIZATION_RETRIES = 180
 
 
 def wallet_key(wallet_file: Path, label: str):
@@ -86,9 +89,14 @@ def main() -> int:
         MANIFEST.write_bytes((json.dumps(manifest, indent=2) + "\n").encode("utf-8"))
     print(f"transaction_hash={tx_hash}", flush=True)
     receipt = client.wait_for_finalization(
-        tx_hash, interval=5, retries=180, full_transaction=True
+        tx_hash,
+        interval=FINALIZATION_POLL_INTERVAL_MS,
+        retries=FINALIZATION_RETRIES,
+        full_transaction=True,
     )
-    successful = tx_execution_succeeded(receipt)
+    lifecycle = receipt.get("lifecycle") or {}
+    leader_execution_succeeded = tx_execution_succeeded(receipt)
+    successful = accepted_finalized_execution(receipt, leader_execution_succeeded)
     execution_result = (
         receipt.get("tx_execution_result_name")
         or receipt.get("txExecutionResultName")
@@ -103,6 +111,8 @@ def main() -> int:
             "hash": tx_hash,
             "status": receipt.get("status") or receipt.get("lifecycle"),
             "execution_result": execution_result,
+            "leader_execution_succeeded": leader_execution_succeeded,
+            "consensus_outcome": lifecycle.get("outcome"),
             "contract_address": contract_address if successful else None,
             "attempted_address": contract_address if not successful else None,
             "source_sha256": source_hash,
@@ -113,6 +123,8 @@ def main() -> int:
         "hash": tx_hash,
         "status": receipt.get("status") or receipt.get("lifecycle"),
         "execution_result": execution_result,
+        "leader_execution_succeeded": leader_execution_succeeded,
+        "consensus_outcome": lifecycle.get("outcome"),
         "contract_address": contract_address if successful else None,
         "attempted_address": contract_address if not successful else None,
         "source_sha256": source_hash,

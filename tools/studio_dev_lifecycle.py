@@ -12,6 +12,7 @@ import hashlib
 import json
 import re
 import time
+from datetime import datetime, timezone
 from pathlib import Path
 
 from eth_account import Account
@@ -19,6 +20,7 @@ from genlayer_py import create_client, studio_devnet
 from genlayer_py.assertions import tx_execution_succeeded
 from genlayer_py.exceptions import GenLayerError
 from genlayer_py.types import TransactionHashVariant
+from tx_status import accepted_finalized_execution
 
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = ROOT / "deployments" / "studio-dev.json"
@@ -27,6 +29,8 @@ FIXTURE_BASE = "https://raw.githubusercontent.com/BeatyXO/Bermond-/a9eab6aa2be30
 # Use a meaningful native transfer amount: tiny 1-wei transfers can behave
 # differently in chain-layer/Studio settlement than regular GEN payments.
 PAYOUT_WEI = 10**18
+FINALIZATION_POLL_INTERVAL_MS = 5_000
+FINALIZATION_RETRIES = 180
 
 
 def read_manifest() -> dict:
@@ -52,13 +56,29 @@ def submit(client, account, address: str, function: str, args: list, value: int 
     manifest = read_manifest()
     if manifest.get("pending_transaction"):
         raise RuntimeError("A prior transaction is pending; resume that hash before submitting another write.")
-    fees = client.estimate_transaction_fees_for_write(
-        address=address,
-        function_name=function,
-        account=account,
-        args=args,
-        value=value,
-    )
+    try:
+        fees = client.estimate_transaction_fees_for_write(
+            address=address,
+            function_name=function,
+            account=account,
+            args=args,
+            value=value,
+            transaction_hash_variant=TransactionHashVariant.LATEST_FINAL,
+            # Studio's default simulation date can differ from the current
+            # network date; pin it to UTC so time-bound calls simulate the
+            # same validity window they will have when submitted.
+            sim_config={
+                "genvm_datetime": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+            },
+        )
+    except GenLayerError as exc:
+        manifest = read_manifest()
+        for case in manifest.get("live_cases", []):
+            if args and case.get("id") == args[0]:
+                case["state"] = "PREFLIGHT_FEE_ESTIMATE_FAILED"
+                case["preflight_error"] = str(exc)[:500]
+        write_manifest(manifest)
+        raise
     tx_hash = client.write_contract(
         address=address,
         function_name=function,
@@ -72,19 +92,27 @@ def submit(client, account, address: str, function: str, args: list, value: int 
     print(f"submitted {function}: {tx_hash}", flush=True)
 
     result = client.wait_for_finalization(
-        tx_hash, interval=5, retries=180, full_transaction=True
+        tx_hash,
+        interval=FINALIZATION_POLL_INTERVAL_MS,
+        retries=FINALIZATION_RETRIES,
+        full_transaction=True,
     )
-    success = tx_execution_succeeded(result)
+    leader_execution_succeeded = tx_execution_succeeded(result)
+    lifecycle = result.get("lifecycle") or {}
+    success = accepted_finalized_execution(result, leader_execution_succeeded)
     execution = result.get("tx_execution_result_name") or result.get("txExecutionResultName")
     runtime_error = None
     if not success:
-        try:
-            finalized = client.get_transaction(tx_hash)
-            leader = (finalized.get("consensus_data") or {}).get("leader_receipt") or []
-            if leader:
-                runtime_error = leader[0].get("result", {}).get("payload")
-        except GenLayerError:
-            runtime_error = "Finalized with execution error; detailed leader receipt was unavailable."
+        if leader_execution_succeeded and str(lifecycle.get("state", "")).casefold() == "finalized":
+            runtime_error = "Leader execution succeeded, but consensus outcome was not accepted: " + str(lifecycle.get("outcome", "unknown"))
+        else:
+            try:
+                finalized = client.get_transaction(tx_hash)
+                leader = (finalized.get("consensus_data") or {}).get("leader_receipt") or []
+                if leader:
+                    runtime_error = leader[0].get("result", {}).get("payload")
+            except GenLayerError:
+                runtime_error = "No accepted finalized execution; detailed leader receipt was unavailable."
     receipt = {
         "function": function,
         "bond_id": args[0] if args else None,
@@ -92,6 +120,10 @@ def submit(client, account, address: str, function: str, args: list, value: int 
         "status": result.get("lifecycle"),
         "execution_result": execution,
         "successful": success,
+        "leader_execution_succeeded": leader_execution_succeeded,
+        "lifecycle_state": lifecycle.get("state"),
+        "consensus_outcome": lifecycle.get("outcome"),
+        "result_name": result.get("result_name") or result.get("resultName"),
         "runtime_error": runtime_error,
     }
     manifest = read_manifest()
@@ -139,9 +171,14 @@ def main() -> int:
         if not args.resume:
             raise RuntimeError("A transaction is already pending; use --resume to check that exact hash before any new write.")
         result = client.wait_for_finalization(
-            pending["hash"], interval=5, retries=180, full_transaction=True
+            pending["hash"],
+            interval=FINALIZATION_POLL_INTERVAL_MS,
+            retries=FINALIZATION_RETRIES,
+            full_transaction=True,
         )
-        success = tx_execution_succeeded(result)
+        leader_execution_succeeded = tx_execution_succeeded(result)
+        lifecycle = result.get("lifecycle") or {}
+        success = accepted_finalized_execution(result, leader_execution_succeeded)
         execution = result.get("tx_execution_result_name") or result.get("txExecutionResultName")
         case_id = pending.get("bond_id")
         if not case_id and manifest.get("live_cases"):
@@ -150,6 +187,10 @@ def main() -> int:
             "function": pending.get("function"), "bond_id": case_id,
             "hash": pending["hash"], "status": result.get("lifecycle"),
             "execution_result": execution, "successful": success, "resumed": True,
+            "leader_execution_succeeded": leader_execution_succeeded,
+            "lifecycle_state": lifecycle.get("state"),
+            "consensus_outcome": lifecycle.get("outcome"),
+            "result_name": result.get("result_name") or result.get("resultName"),
         }
         manifest.setdefault("lifecycle_transactions", []).append(receipt)
         for case in manifest.get("live_cases", []):
@@ -163,24 +204,104 @@ def main() -> int:
         case = next((item for item in manifest.get("live_cases", []) if item.get("id") == args.release_case), None)
         if not case:
             raise RuntimeError(f"Unknown live release test bond {args.release_case!r}.")
-        if case.get("state") == "RELEASE_FINALIZED":
+        if str(case.get("state", "")).startswith("RELEASE_FINALIZED"):
             raise RuntimeError("This release test already finalized; refusing a duplicate release.")
+        prior_release_attempts = [
+            item for item in manifest.get("lifecycle_transactions", [])
+            if item.get("bond_id") == args.release_case and item.get("function") == "release_collateral"
+        ]
+        if prior_release_attempts:
+            raise RuntimeError("A release transaction was already submitted for this bond; inspect its receipt and finalized state before any manual recovery. Refusing a blind retry.")
         deadline = int(case["claim_deadline"])
         if int(time.time()) <= deadline:
             raise RuntimeError(f"Claim deadline has not passed; release eligible after {deadline} UTC.")
+        before_state = client.read_contract(
+            address,
+            "get_bond",
+            args=[args.release_case],
+            account=provider,
+            transaction_hash_variant=TransactionHashVariant.LATEST_FINAL,
+        )
+        if before_state.get("state") not in ("ACTIVE", "UNRESOLVED", "BREACHED"):
+            raise RuntimeError("Finalized bond state is not releasable; no release submitted.")
+        if int(before_state.get("claim_deadline", -1)) != deadline:
+            raise RuntimeError("Manifest deadline does not match finalized bond state; no release submitted.")
+        expected_remaining = int(before_state.get("reserved_wei", 0))
+        provider_balance_before = None
+        provider_balance_after = None
+        try:
+            provider_balance_before = int(client.get_balance(provider.address, block_identifier="finalized"))
+        except GenLayerError as exc:
+            print(f"provider_balance_before_release_unavailable={exc}", flush=True)
         receipt = submit(client, provider, address, "release_collateral", [args.release_case])
+        try:
+            after_state = client.read_contract(
+                address,
+                "get_bond",
+                args=[args.release_case],
+                account=provider,
+                transaction_hash_variant=TransactionHashVariant.LATEST_FINAL,
+            )
+        except GenLayerError as exc:
+            after_state = None
+            print(f"post_release_state_read_unavailable={exc}", flush=True)
+        try:
+            provider_balance_after = int(client.get_balance(provider.address, block_identifier="finalized"))
+        except GenLayerError as exc:
+            print(f"provider_balance_after_release_unavailable={exc}", flush=True)
         manifest = read_manifest()
         case = next(item for item in manifest.get("live_cases", []) if item.get("id") == args.release_case)
-        case["state"] = "RELEASE_FINALIZED" if receipt["successful"] else "RELEASE_FAILED"
+        balance_delta = (
+            provider_balance_after - provider_balance_before
+            if provider_balance_before is not None and provider_balance_after is not None
+            else None
+        )
+        state_verified = (
+            after_state is not None
+            and after_state.get("state") == "CLOSED"
+            and int(after_state.get("reserved_wei", -1)) == 0
+            and int(after_state.get("pending_wei", -1)) >= expected_remaining
+        )
+        balance_delta_observed = expected_remaining == 0 or (balance_delta is not None and balance_delta > 0)
+        case["state"] = (
+            "RELEASE_FINALIZED_ACCOUNTING_PENDING"
+            if receipt["successful"] and state_verified and balance_delta_observed
+            else "RELEASE_FINALIZED_EVIDENCE_INCOMPLETE"
+            if receipt["successful"]
+            else "RELEASE_FAILED"
+        )
         case["release_receipt"] = receipt
+        case["post_release_state"] = (
+            {
+                "state": after_state.get("state"),
+                "reserved_wei": after_state.get("reserved_wei"),
+                "released_wei": after_state.get("released_wei"),
+                "pending_wei": after_state.get("pending_wei"),
+            }
+            if after_state is not None
+            else None
+        )
+        case["provider_balance_before_release_wei"] = provider_balance_before
+        case["provider_balance_after_release_wei"] = provider_balance_after
+        case["provider_balance_delta_wei"] = balance_delta
+        manifest["blocker"] = (
+            "Expiry release transaction finalized; inspect post-release bond state and provider balance delta. "
+            "The contract still accounts for the emitted transfer as pending until settlement reconciliation is available."
+        )
         write_manifest(manifest)
-        return 0 if receipt["successful"] else 1
+        return 0 if receipt["successful"] and state_verified and balance_delta_observed else 1
     if args.resume_case:
         case = next((item for item in manifest.get("live_cases", []) if item.get("id") == args.resume_case), None)
         if not case:
             raise RuntimeError(f"Unknown live test bond {args.resume_case!r}.")
         receipts = case.get("receipts", [])
         successful = {item.get("function") for item in receipts if item.get("successful")}
+        prior_checks = [item for item in receipts if item.get("function") == "check_policy"]
+        if prior_checks and not prior_checks[-1].get("successful"):
+            raise RuntimeError(
+                "A prior check_policy attempt did not reach accepted consensus; "
+                "refusing to retry it on the same case. Review the finalized outcome first."
+            )
         if any(item.get("function") == "claim_compensation" for item in receipts):
             raise RuntimeError("This test bond already has a finalized claim attempt; refusing to repeat it.")
         bond_id = args.resume_case
@@ -203,7 +324,46 @@ def main() -> int:
             write_manifest(manifest)
         if int(time.time()) > int(deadline):
             raise RuntimeError("The test bond's claim deadline has passed; refusing a late claim.")
-        print("attempting claim; the contract itself enforces the BREACHED-state requirement", flush=True)
+        try:
+            pre_claim_bond = client.read_contract(
+                address,
+                "get_bond",
+                args=[bond_id],
+                account=beneficiary,
+                transaction_hash_variant=TransactionHashVariant.LATEST_FINAL,
+            )
+        except GenLayerError as exc:
+            manifest = read_manifest()
+            case = next(item for item in manifest.get("live_cases", []) if item.get("id") == bond_id)
+            case["state"] = "CLAIM_STATE_READ_UNAVAILABLE"
+            case["claim_submitted"] = False
+            case["pre_claim_state_error"] = str(exc)[:500]
+            manifest["blocker"] = "Finalized bond state was unavailable before claim; no claim was submitted."
+            write_manifest(manifest)
+            return 1
+        if (
+            pre_claim_bond.get("state") != "BREACHED"
+            or int(pre_claim_bond.get("checks", 0)) < 1
+            or int(pre_claim_bond.get("claim_deadline", -1)) != int(deadline)
+        ):
+            manifest = read_manifest()
+            case = next(item for item in manifest.get("live_cases", []) if item.get("id") == bond_id)
+            case["state"] = "CLAIM_WITHHELD_FINALIZED_STATE"
+            case["claim_submitted"] = False
+            case["pre_claim_state"] = {
+                "state": pre_claim_bond.get("state"),
+                "checks": pre_claim_bond.get("checks"),
+                "claim_deadline": pre_claim_bond.get("claim_deadline"),
+            }
+            manifest["blocker"] = "Finalized bond state did not authorize a claim; the lifecycle runner withheld it."
+            write_manifest(manifest)
+            return 1
+        print("finalized state confirms breach; submitting one claim", flush=True)
+        balance_before_claim = None
+        try:
+            balance_before_claim = int(client.get_balance(beneficiary.address, block_identifier="finalized"))
+        except GenLayerError as exc:
+            print(f"beneficiary_balance_before_claim_unavailable={exc}", flush=True)
         try:
             receipt = submit(client, beneficiary, address, "claim_compensation", [bond_id])
         except RuntimeError as exc:
@@ -213,15 +373,51 @@ def main() -> int:
             case["state"] = "CLAIM_FAILED"
             write_manifest(manifest)
             return 1
+        post_claim_bond = None
+        balance_after_claim = None
+        try:
+            post_claim_bond = client.read_contract(
+                address,
+                "get_bond",
+                args=[bond_id],
+                account=beneficiary,
+                transaction_hash_variant=TransactionHashVariant.LATEST_FINAL,
+            )
+        except GenLayerError as exc:
+            print(f"post_claim_state_read_unavailable={exc}", flush=True)
+        try:
+            balance_after_claim = int(client.get_balance(beneficiary.address, block_identifier="finalized"))
+        except GenLayerError as exc:
+            print(f"beneficiary_balance_after_claim_unavailable={exc}", flush=True)
+        balance_delta = (
+            balance_after_claim - balance_before_claim
+            if balance_before_claim is not None and balance_after_claim is not None
+            else None
+        )
+        claimed = post_claim_bond is not None and beneficiary.address.lower() in post_claim_bond.get("claimed", [])
+        verified = receipt["successful"] and claimed and balance_delta is not None and balance_delta > 0
         manifest = read_manifest()
         case = next(item for item in manifest.get("live_cases", []) if item.get("id") == bond_id)
-        case["state"] = "CLAIM_FINALIZED" if receipt["successful"] else "CLAIM_FAILED"
-        manifest["blocker"] = "Claim transaction finalized; Studio Dev does not expose reliable gen_call state reads or prove external GEN transfer settlement to an EOA recipient."
+        case["state"] = "CLAIM_FINALIZED_ACCOUNTING_PENDING" if verified else "CLAIM_FINALIZED_EVIDENCE_INCOMPLETE"
+        case["post_claim_state"] = (
+            {
+                "state": post_claim_bond.get("state"),
+                "claimed": claimed,
+                "pending_wei": post_claim_bond.get("pending_wei"),
+                "paid_wei": post_claim_bond.get("paid_wei"),
+                "reserved_wei": post_claim_bond.get("reserved_wei"),
+            }
+            if post_claim_bond is not None
+            else None
+        )
+        case["beneficiary_balance_before_claim_wei"] = balance_before_claim
+        case["beneficiary_balance_after_claim_wei"] = balance_after_claim
+        case["beneficiary_balance_delta_wei"] = balance_delta
+        manifest["blocker"] = "Claim transaction finalized; inspect the post-claim state and beneficiary balance delta. Contract accounting retains emitted EOA transfers as pending until settlement is independently reconciled."
         write_manifest(manifest)
-        return 0 if receipt["successful"] else 1
-    # Reads currently fail on Studio Dev with a server-side SQLAlchemy error.
-    # This test uses a unique timestamped ID and a verified deployment, so a
-    # preliminary state read is unnecessary and must not block write testing.
+        return 0 if verified else 1
+    # The live deployment's code and schema have already been verified. Never
+    # submit a claim unless a finalized read confirms the recorded breach.
 
     baseline = (ROOT / "deployments" / "fixtures" / "baseline.txt").read_bytes()
     # Git's Windows checkout may convert committed LF to CRLF, but the pinned
@@ -302,7 +498,53 @@ def main() -> int:
         print(f"bond_id={bond_id}")
         print(f"claim_deadline={claim_deadline}")
         return 0
-    receipts.append(submit(client, beneficiary, address, "check_policy", [bond_id]))
+    try:
+        receipts.append(submit(client, beneficiary, address, "check_policy", [bond_id]))
+    except RuntimeError:
+        manifest = read_manifest()
+        check_receipt = next(
+            (
+                item for item in reversed(manifest.get("lifecycle_transactions", []))
+                if item.get("bond_id") == bond_id and item.get("function") == "check_policy"
+            ),
+            None,
+        )
+        try:
+            bond = client.read_contract(
+                address,
+                "get_bond",
+                args=[bond_id],
+                account=beneficiary,
+                transaction_hash_variant=TransactionHashVariant.LATEST_FINAL,
+            )
+        except GenLayerError:
+            bond = None
+        for case in manifest.get("live_cases", []):
+            if case.get("id") == bond_id:
+                case["receipts"] = [
+                    item for item in manifest.get("lifecycle_transactions", [])
+                    if item.get("bond_id") == bond_id
+                ]
+                outcome = str((check_receipt or {}).get("consensus_outcome", "")).casefold()
+                case["state"] = (
+                    "CHECK_CONSENSUS_UNDETERMINED"
+                    if outcome == "undetermined"
+                    else "CHECK_NOT_ACCEPTED"
+                )
+                case["last_verdict"] = None
+                if bond is not None:
+                    case["post_check_state"] = {
+                        "state": bond.get("state"),
+                        "checks": bond.get("checks"),
+                        "last_verdict": bond.get("last_verdict"),
+                        "pending_wei": bond.get("pending_wei"),
+                        "reserved_wei": bond.get("reserved_wei"),
+                    }
+        manifest["blocker"] = (
+            "Policy check did not reach accepted consensus; no result was persisted and no claim was submitted."
+        )
+        write_manifest(manifest)
+        raise
 
     bond = None
     try:
@@ -315,17 +557,64 @@ def main() -> int:
         )
     except GenLayerError as exc:
         print(f"bond_state_read_unavailable={exc}", flush=True)
-    if bond:
-        print(f"bond_state_after_check={bond.get('state')}")
-        print(f"last_verdict={bond.get('last_verdict')}")
-    # The contract enforces BREACHED and deadline eligibility. If Studio's read
-    # endpoint is unavailable, submitting the test claimant's call is safe: it
-    # either proves the claim path or finalizes a guarded rejection.
-    if (bond and bond.get("state") == "BREACHED") or (bond is None and int(time.time()) <= claim_deadline):
+    if bond is None:
+        manifest = read_manifest()
+        for case in manifest.get("live_cases", []):
+            if case.get("id") == bond_id:
+                case["receipts"] = [
+                    item for item in manifest.get("lifecycle_transactions", [])
+                    if item.get("bond_id") == bond_id
+                ]
+                case["state"] = "CHECK_FINALIZED_STATE_READ_UNAVAILABLE"
+                case["claim_deadline"] = claim_deadline
+                case["release_eligible_after"] = claim_deadline + 1
+        manifest["blocker"] = "Policy check finalized, but the finalized state read failed; no claim was submitted."
+        write_manifest(manifest)
+        raise RuntimeError("Finalized state is unavailable after the check; claim withheld.")
+
+    if int(bond.get("checks", 0)) < 1 or not bond.get("last_fingerprint"):
+        manifest = read_manifest()
+        for case in manifest.get("live_cases", []):
+            if case.get("id") == bond_id:
+                case["state"] = "CHECK_FINALIZED_STATE_INCONSISTENT"
+                case["post_check_state"] = {
+                    "state": bond.get("state"),
+                    "checks": bond.get("checks"),
+                    "last_verdict": bond.get("last_verdict"),
+                    "last_fingerprint": bond.get("last_fingerprint"),
+                }
+        manifest["blocker"] = "Finalized check receipt did not produce a corresponding finalized state update; claim withheld."
+        write_manifest(manifest)
+        raise RuntimeError("The finalized check did not persist a verdict; claim withheld.")
+
+    print(f"bond_state_after_check={bond.get('state')}")
+    print(f"last_verdict={bond.get('last_verdict')}")
+    balance_before_claim = None
+    balance_after_claim = None
+    post_claim_bond = None
+    if bond.get("state") == "BREACHED":
+        try:
+            balance_before_claim = int(client.get_balance(beneficiary.address, block_identifier="finalized"))
+        except GenLayerError as exc:
+            print(f"beneficiary_balance_before_claim_unavailable={exc}", flush=True)
         try:
             receipts.append(submit(client, beneficiary, address, "claim_compensation", [bond_id]))
         except RuntimeError as exc:
             print(f"claim_result={exc}")
+        try:
+            post_claim_bond = client.read_contract(
+                address,
+                "get_bond",
+                args=[bond_id],
+                account=beneficiary,
+                transaction_hash_variant=TransactionHashVariant.LATEST_FINAL,
+            )
+        except GenLayerError as exc:
+            print(f"post_claim_state_read_unavailable={exc}", flush=True)
+        try:
+            balance_after_claim = int(client.get_balance(beneficiary.address, block_identifier="finalized"))
+        except GenLayerError as exc:
+            print(f"beneficiary_balance_after_claim_unavailable={exc}", flush=True)
     else:
         print("claim_result=not submitted because the finalized policy check did not authorize a breach")
 
@@ -336,12 +625,43 @@ def main() -> int:
                 item for item in manifest.get("lifecycle_transactions", [])
                 if item.get("bond_id") == bond_id
             ]
-            case["state"] = bond.get("state") if bond else "CLAIM_RESULT_RECORDED_STATE_READ_UNAVAILABLE"
-            case["last_verdict"] = bond.get("last_verdict") if bond else None
+            if bond.get("state") == "BREACHED":
+                successful_claim = any(
+                    item.get("function") == "claim_compensation" and item.get("successful")
+                    for item in case["receipts"]
+                )
+                case["state"] = (
+                    "CLAIM_FINALIZED_STATE_VERIFIED"
+                    if post_claim_bond
+                    and successful_claim
+                    and beneficiary.address.lower() in post_claim_bond.get("claimed", [])
+                    else "CLAIM_FINALIZED_STATE_READ_UNAVAILABLE"
+                )
+                if post_claim_bond:
+                    case["post_claim_state"] = {
+                        "state": post_claim_bond.get("state"),
+                        "claimed": beneficiary.address.lower() in post_claim_bond.get("claimed", []),
+                        "pending_wei": post_claim_bond.get("pending_wei"),
+                        "paid_wei": post_claim_bond.get("paid_wei"),
+                        "reserved_wei": post_claim_bond.get("reserved_wei"),
+                    }
+            else:
+                case["state"] = bond.get("state", "UNKNOWN")
+            case["last_verdict"] = bond.get("last_verdict")
             case["claim_deadline"] = claim_deadline
             case["release_eligible_after"] = claim_deadline + 1
+            case["beneficiary_balance_before_claim_wei"] = balance_before_claim
+            case["beneficiary_balance_after_claim_wei"] = balance_after_claim
+            case["beneficiary_balance_delta_wei"] = (
+                balance_after_claim - balance_before_claim
+                if balance_before_claim is not None and balance_after_claim is not None
+                else None
+            )
     manifest["status"] = "DEPLOYED_VERIFIED"
-    manifest["blocker"] = "Studio Dev cannot settle the contract's external GEN payout to an EOA; release also requires its claim deadline to expire."
+    if bond.get("state") == "BREACHED":
+        manifest["blocker"] = "Breach claim tested; inspect the finalized receipt, post-claim state and beneficiary balance delta. Contract accounting retains emitted EOA transfers as pending until settlement is independently reconciled."
+    else:
+        manifest["blocker"] = "Policy check finalized without an accepted breach; claim was correctly withheld. Expiry-release testing remains separate."
     write_manifest(manifest)
     print(f"bond_id={bond_id}")
     return 0

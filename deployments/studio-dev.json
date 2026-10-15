@@ -7,21 +7,21 @@
     "explorer": "https://explorer-studio-dev.genlayer.com",
     "source": "https://docs.genlayer.com/developers/networks"
   },
-  "status": "HISTORICAL_DEPLOYMENT_SOURCE_OUTDATED",
-  "contract_address": "0x8A5cb514A6b8Eae009cB896F0EcAC2F208d954F9",
+  "status": "DEPLOYED_VERIFIED",
+  "contract_address": "0x50039c8Aa426aF3e2F3Cc2DB0677BdfaC5c57A37",
   "contract_dependency": "py-genlayer:5jycge4q8k23462jtb0b9fyey1s9qz928sz2nbrd9mg4sxqg2qng",
   "frontend_sdk": "genlayer-js@2.0.0-rc.1",
-  "release_source_sha256": "e1987c6d5b2cff228025e5be8d20d570cd436e05f797569b66020906f0cc1554",
+  "release_source_sha256": "94f4c585126a8d99348ffcca478b8dd4a157aaf2ca93c84d6a8864585493ac5a",
   "deployment_transaction": {
-    "hash": "0x0a37753101ddc15e274c3dbe0e744dc5c2138575dfb4006a21df43c1df82a8af",
+    "hash": "0xd925f95f25c2508b2e4bf5987c501c89e3f8a70d64fdecccb08ce90cd828f96c",
     "status": {
       "state": "finalized",
       "outcome": "accepted"
     },
     "execution_result": "FINISHED_WITH_RETURN",
-    "contract_address": "0x8A5cb514A6b8Eae009cB896F0EcAC2F208d954F9",
+    "contract_address": "0x50039c8Aa426aF3e2F3Cc2DB0677BdfaC5c57A37",
     "attempted_address": null,
-    "source_sha256": "e1987c6d5b2cff228025e5be8d20d570cd436e05f797569b66020906f0cc1554"
+    "source_sha256": "94f4c585126a8d99348ffcca478b8dd4a157aaf2ca93c84d6a8864585493ac5a"
   },
   "schema": {
     "ctor": {
@@ -29,6 +29,22 @@
       "kwparams": {}
     },
     "methods": {
+      "accept_bond": {
+        "params": [
+          [
+            "bond_id",
+            "string"
+          ],
+          [
+            "policy_fingerprint",
+            "string"
+          ]
+        ],
+        "kwparams": {},
+        "readonly": false,
+        "ret": "string",
+        "payable": false
+      },
       "check_policy": {
         "params": [
           [
@@ -75,6 +91,18 @@
           ],
           [
             "baseline_sha256",
+            "string"
+          ],
+          [
+            "baseline_document_id",
+            "string"
+          ],
+          [
+            "baseline_publisher",
+            "string"
+          ],
+          [
+            "baseline_version",
             "string"
           ],
           [
@@ -185,9 +213,9 @@
       }
     }
   },
-  "code_parity": "HISTORICAL_RELEASE_EXACT_MATCH_CURRENT_CANDIDATE_UNMATCHED",
+  "code_parity": "EXACT_BYTES_MATCH",
   "receipt_finality": "FINALIZED_SUCCESS",
-  "blocker": "The current candidate is not deployed. Studio Dev get_bond_ids reads at LATEST_FINAL against two historical contracts return the same server-side SQLAlchemy rollback error; transaction-specific fee estimation is also unhealthy. No candidate deployment or lifecycle write was attempted.",
+  "blocker": "Two finalized policy checks for the breach fixture returned MAJORITY_DISAGREE, so no compensation claim was submitted. Expiry release finalized with agreement and a provider balance delta, but the closed contract still records the 1 GEN transfer as pending; there is no contract-level settlement reconciliation path.",
   "studio_transfer_note": "Studio Dev documentation describes outgoing GEN value transfers to EOAs, and historical receipts contain outgoing message records. This does not establish recipient balance deltas or rollback/reconciliation semantics for the current candidate.",
   "cases": [
     {
@@ -340,32 +368,43 @@
       "contract_address": "0x8A5cb514A6b8Eae009cB896F0EcAC2F208d954F9",
       "attempted_address": null,
       "source_sha256": "e1987c6d5b2cff228025e5be8d20d570cd436e05f797569b66020906f0cc1554"
+    },
+    {
+      "hash": "0xd925f95f25c2508b2e4bf5987c501c89e3f8a70d64fdecccb08ce90cd828f96c",
+      "status": {
+        "state": "finalized",
+        "outcome": "accepted"
+      },
+      "execution_result": "FINISHED_WITH_RETURN",
+      "contract_address": "0x50039c8Aa426aF3e2F3Cc2DB0677BdfaC5c57A37",
+      "attempted_address": null,
+      "source_sha256": "94f4c585126a8d99348ffcca478b8dd4a157aaf2ca93c84d6a8864585493ac5a"
     }
   ],
   "verification": {
-    "scope": "HISTORICAL_RELEASE_AT_VERIFICATION_TIME",
     "chain_id": 61997,
     "deployment_status": {
       "status": "FINALIZED",
       "statusCode": 7
     },
-    "local_source_sha256": "e1987c6d5b2cff228025e5be8d20d570cd436e05f797569b66020906f0cc1554",
-    "deployed_source_sha256": "e1987c6d5b2cff228025e5be8d20d570cd436e05f797569b66020906f0cc1554",
-    "exact_bytes_match": true,
-    "current_candidate_source_sha256": "94f4c585126a8d99348ffcca478b8dd4a157aaf2ca93c84d6a8864585493ac5a"
+    "deployment_outcome": "MAJORITY_AGREE",
+    "deployment_execution_result": "FINISHED_WITH_RETURN",
+    "local_source_sha256": "94f4c585126a8d99348ffcca478b8dd4a157aaf2ca93c84d6a8864585493ac5a",
+    "deployed_source_sha256": "94f4c585126a8d99348ffcca478b8dd4a157aaf2ca93c84d6a8864585493ac5a",
+    "exact_bytes_match": true
   },
   "pending_transaction": null,
   "pending_deployment": null,
   "last_deployment_attempt": {
-    "hash": "0x0a37753101ddc15e274c3dbe0e744dc5c2138575dfb4006a21df43c1df82a8af",
+    "hash": "0xd925f95f25c2508b2e4bf5987c501c89e3f8a70d64fdecccb08ce90cd828f96c",
     "status": {
       "state": "finalized",
       "outcome": "accepted"
     },
     "execution_result": "FINISHED_WITH_RETURN",
-    "contract_address": "0x8A5cb514A6b8Eae009cB896F0EcAC2F208d954F9",
+    "contract_address": "0x50039c8Aa426aF3e2F3Cc2DB0677BdfaC5c57A37",
     "attempted_address": null,
-    "source_sha256": "e1987c6d5b2cff228025e5be8d20d570cd436e05f797569b66020906f0cc1554"
+    "source_sha256": "94f4c585126a8d99348ffcca478b8dd4a157aaf2ca93c84d6a8864585493ac5a"
   },
   "live_cases": [
     {
@@ -1136,6 +1175,202 @@
         "successful": true,
         "runtime_error": null
       }
+    },
+    {
+      "id": "studio-breach-1792061106",
+      "expected": "BREACHED",
+      "baseline_url": "https://raw.githubusercontent.com/BeatyXO/Bermond-/a9eab6aa2be30d81c8d296e38a9f8ef366f64761/deployments/fixtures/baseline.txt",
+      "current_url": "https://raw.githubusercontent.com/BeatyXO/Bermond-/a9eab6aa2be30d81c8d296e38a9f8ef366f64761/deployments/fixtures/breached.txt",
+      "provider": "0xD6423aE82a975d55C6CeaC222827A727325e0459",
+      "beneficiary": "0x39680bd423437C0Eaa18493629652821Ec672C61",
+      "payout_wei": 1000000000000000000,
+      "policy_fingerprint": "8dd28cd3b9fb90954db96edc429d94adb4a4031bf97a0844ac375c807019d8d5",
+      "baseline_identity": {
+        "document_id": "bermond-fixture-baseline-v1",
+        "publisher": "Bermond Studio Dev test fixture",
+        "version": "fixture-v1"
+      },
+      "receipts": [],
+      "state": "PREFLIGHT_FEE_ESTIMATE_FAILED",
+      "preflight_error": "Studio simulation without genvm_datetime returned invalid coverage end. The same create_bond simulation with genvm_datetime set to current UTC estimated successfully. No transaction was submitted."
+    },
+    {
+      "id": "studio-breach-1792061703",
+      "expected": "BREACHED",
+      "baseline_url": "https://raw.githubusercontent.com/BeatyXO/Bermond-/a9eab6aa2be30d81c8d296e38a9f8ef366f64761/deployments/fixtures/baseline.txt",
+      "current_url": "https://raw.githubusercontent.com/BeatyXO/Bermond-/a9eab6aa2be30d81c8d296e38a9f8ef366f64761/deployments/fixtures/breached.txt",
+      "provider": "0xD6423aE82a975d55C6CeaC222827A727325e0459",
+      "beneficiary": "0x39680bd423437C0Eaa18493629652821Ec672C61",
+      "payout_wei": 1000000000000000000,
+      "policy_fingerprint": "54853eac47dda326f8b27edac60298596a63bc513ebfdca46d8b666e481bbf7e",
+      "baseline_identity": {
+        "document_id": "bermond-fixture-baseline-v1",
+        "publisher": "Bermond Studio Dev test fixture",
+        "version": "fixture-v1"
+      },
+      "receipts": [
+        {
+          "function": "create_bond",
+          "bond_id": "studio-breach-1792061703",
+          "hash": "0x42afb7e21c56e887500fc1b62c8333c9d6be4a874fabfa2a05b4ad8e268bd8d4",
+          "status": {
+            "state": "finalized",
+            "outcome": "accepted"
+          },
+          "execution_result": "FINISHED_WITH_RETURN",
+          "successful": true,
+          "runtime_error": null
+        },
+        {
+          "function": "enroll_subscriber",
+          "bond_id": "studio-breach-1792061703",
+          "hash": "0xcdc948a4411dabf9aa74ca6c35b879d952821146142e943287a226c4e4109a1a",
+          "status": {
+            "state": "finalized",
+            "outcome": "accepted"
+          },
+          "execution_result": "FINISHED_WITH_RETURN",
+          "successful": true,
+          "runtime_error": null
+        },
+        {
+          "function": "accept_bond",
+          "bond_id": "studio-breach-1792061703",
+          "hash": "0x01632a4a325f7423a9dbda3c05d0c4bc1006b4f9e5665bb8c54fa6d96c7cca34",
+          "status": {
+            "state": "finalized",
+            "outcome": "accepted"
+          },
+          "execution_result": "FINISHED_WITH_RETURN",
+          "successful": true,
+          "runtime_error": null
+        },
+        {
+          "function": "fund_bond",
+          "bond_id": "studio-breach-1792061703",
+          "hash": "0xb689bed1793bacda48fd64cf73b744aa5445932d2c2b88aa3a3b3bd1e8aa6fab",
+          "status": {
+            "state": "finalized",
+            "outcome": "accepted"
+          },
+          "execution_result": "FINISHED_WITH_RETURN",
+          "successful": true,
+          "runtime_error": null
+        },
+        {
+          "function": "check_policy",
+          "bond_id": "studio-breach-1792061703",
+          "hash": "0x3981e4871eff84ae810dc39f207d3fc5438359f70f4d2906babd5e6b5f07b8da",
+          "status": {
+            "state": "finalized",
+            "outcome": "undetermined"
+          },
+          "execution_result": "FINISHED_WITH_RETURN",
+          "successful": false,
+          "runtime_error": "Leader execution succeeded, but finalized consensus outcome was undetermined; no state change was accepted.",
+          "leader_execution_succeeded": true,
+          "lifecycle_state": "finalized",
+          "consensus_outcome": "undetermined",
+          "result_name": "MAJORITY_DISAGREE"
+        },
+        {
+          "function": "check_policy",
+          "bond_id": "studio-breach-1792061703",
+          "hash": "0xbac1e343a800309e61180aff773a950188327a227ca91097c2bb1c2e18318bf5",
+          "status": {
+            "state": "finalized",
+            "outcome": "undetermined"
+          },
+          "execution_result": "FINISHED_WITH_RETURN",
+          "successful": false,
+          "resumed": true,
+          "leader_execution_succeeded": true,
+          "lifecycle_state": "finalized",
+          "consensus_outcome": "undetermined",
+          "result_name": "MAJORITY_DISAGREE"
+        },
+        {
+          "function": "release_collateral",
+          "bond_id": "studio-breach-1792061703",
+          "hash": "0x3d7756ce5416ed3990e9574671e20362d0308e82245bf632be4ae22440e640fb",
+          "status": {
+            "state": "finalized",
+            "outcome": "accepted"
+          },
+          "execution_result": "FINISHED_WITH_RETURN",
+          "successful": true,
+          "leader_execution_succeeded": true,
+          "lifecycle_state": "finalized",
+          "consensus_outcome": "accepted",
+          "result_name": "MAJORITY_AGREE",
+          "runtime_error": null
+        }
+      ],
+      "state": "RELEASE_FINALIZED_ACCOUNTING_PENDING",
+      "last_verdict": null,
+      "claim_deadline": 1792065963,
+      "release_eligible_after": 1792065964,
+      "beneficiary_balance_before_claim_wei": null,
+      "beneficiary_balance_after_claim_wei": null,
+      "beneficiary_balance_delta_wei": null,
+      "post_check_state": {
+        "state": "ACTIVE",
+        "checks": 0,
+        "last_verdict": "",
+        "funded_wei": 1000000000000000000,
+        "reserved_wei": 1000000000000000000,
+        "pending_wei": 0
+      },
+      "consensus_diagnostics": {
+        "lifecycle_state": "finalized",
+        "consensus_outcome": "undetermined",
+        "leader_execution": "SUCCESS",
+        "validator_votes": {
+          "disagree": 3,
+          "idle": 2
+        },
+        "claim_submitted": false,
+        "result_name": "MAJORITY_DISAGREE"
+      },
+      "first_check_diagnostics": {
+        "lifecycle_state": "finalized",
+        "consensus_outcome": "undetermined",
+        "leader_execution": "SUCCESS",
+        "validator_votes": {
+          "disagree": 2,
+          "idle": 3
+        },
+        "result_name": "MAJORITY_DISAGREE"
+      },
+      "recheck_attempts": 1,
+      "recheck_started_at_utc": 1792063984,
+      "release_receipt": {
+        "function": "release_collateral",
+        "bond_id": "studio-breach-1792061703",
+        "hash": "0x3d7756ce5416ed3990e9574671e20362d0308e82245bf632be4ae22440e640fb",
+        "status": {
+          "state": "finalized",
+          "outcome": "accepted"
+        },
+        "execution_result": "FINISHED_WITH_RETURN",
+        "successful": true,
+        "leader_execution_succeeded": true,
+        "lifecycle_state": "finalized",
+        "consensus_outcome": "accepted",
+        "result_name": "MAJORITY_AGREE",
+        "runtime_error": null
+      },
+      "post_release_state": {
+        "state": "CLOSED",
+        "reserved_wei": 0,
+        "released_wei": 0,
+        "pending_wei": 1000000000000000000
+      },
+      "provider_balance_before_release_wei": 195994440300749943177,
+      "provider_balance_after_release_wei": 196994313981749942354,
+      "provider_balance_delta_wei": 999873680999999177,
+      "release_state_read_verified": true,
+      "provider_balance_delta_observed": true
     }
   ],
   "lifecycle_transactions": [
@@ -1708,15 +1943,135 @@
       "execution_result": "FINISHED_WITH_RETURN",
       "successful": true,
       "runtime_error": null
+    },
+    {
+      "function": "create_bond",
+      "bond_id": "studio-breach-1792061703",
+      "hash": "0x42afb7e21c56e887500fc1b62c8333c9d6be4a874fabfa2a05b4ad8e268bd8d4",
+      "status": {
+        "state": "finalized",
+        "outcome": "accepted"
+      },
+      "execution_result": "FINISHED_WITH_RETURN",
+      "successful": true,
+      "runtime_error": null,
+      "leader_execution_succeeded": true,
+      "lifecycle_state": "finalized",
+      "consensus_outcome": "accepted"
+    },
+    {
+      "function": "enroll_subscriber",
+      "bond_id": "studio-breach-1792061703",
+      "hash": "0xcdc948a4411dabf9aa74ca6c35b879d952821146142e943287a226c4e4109a1a",
+      "status": {
+        "state": "finalized",
+        "outcome": "accepted"
+      },
+      "execution_result": "FINISHED_WITH_RETURN",
+      "successful": true,
+      "runtime_error": null,
+      "leader_execution_succeeded": true,
+      "lifecycle_state": "finalized",
+      "consensus_outcome": "accepted"
+    },
+    {
+      "function": "accept_bond",
+      "bond_id": "studio-breach-1792061703",
+      "hash": "0x01632a4a325f7423a9dbda3c05d0c4bc1006b4f9e5665bb8c54fa6d96c7cca34",
+      "status": {
+        "state": "finalized",
+        "outcome": "accepted"
+      },
+      "execution_result": "FINISHED_WITH_RETURN",
+      "successful": true,
+      "runtime_error": null,
+      "leader_execution_succeeded": true,
+      "lifecycle_state": "finalized",
+      "consensus_outcome": "accepted"
+    },
+    {
+      "function": "fund_bond",
+      "bond_id": "studio-breach-1792061703",
+      "hash": "0xb689bed1793bacda48fd64cf73b744aa5445932d2c2b88aa3a3b3bd1e8aa6fab",
+      "status": {
+        "state": "finalized",
+        "outcome": "accepted"
+      },
+      "execution_result": "FINISHED_WITH_RETURN",
+      "successful": true,
+      "runtime_error": null,
+      "leader_execution_succeeded": true,
+      "lifecycle_state": "finalized",
+      "consensus_outcome": "accepted"
+    },
+    {
+      "function": "check_policy",
+      "bond_id": "studio-breach-1792061703",
+      "hash": "0x3981e4871eff84ae810dc39f207d3fc5438359f70f4d2906babd5e6b5f07b8da",
+      "status": {
+        "state": "finalized",
+        "outcome": "undetermined"
+      },
+      "execution_result": "FINISHED_WITH_RETURN",
+      "successful": false,
+      "runtime_error": "Leader execution succeeded, but finalized consensus outcome was undetermined; no state change was accepted.",
+      "leader_execution_succeeded": true,
+      "lifecycle_state": "finalized",
+      "consensus_outcome": "undetermined",
+      "result_name": "MAJORITY_DISAGREE"
+    },
+    {
+      "function": "check_policy",
+      "bond_id": "studio-breach-1792061703",
+      "hash": "0xbac1e343a800309e61180aff773a950188327a227ca91097c2bb1c2e18318bf5",
+      "status": {
+        "state": "finalized",
+        "outcome": "undetermined"
+      },
+      "execution_result": "FINISHED_WITH_RETURN",
+      "successful": false,
+      "resumed": true,
+      "leader_execution_succeeded": true,
+      "lifecycle_state": "finalized",
+      "consensus_outcome": "undetermined",
+      "result_name": "MAJORITY_DISAGREE"
+    },
+    {
+      "function": "release_collateral",
+      "bond_id": "studio-breach-1792061703",
+      "hash": "0x3d7756ce5416ed3990e9574671e20362d0308e82245bf632be4ae22440e640fb",
+      "status": {
+        "state": "finalized",
+        "outcome": "accepted"
+      },
+      "execution_result": "FINISHED_WITH_RETURN",
+      "successful": true,
+      "leader_execution_succeeded": true,
+      "lifecycle_state": "finalized",
+      "consensus_outcome": "accepted",
+      "result_name": "MAJORITY_AGREE",
+      "runtime_error": null
     }
   ],
   "candidate_contract_source_sha256": "94f4c585126a8d99348ffcca478b8dd4a157aaf2ca93c84d6a8864585493ac5a",
-  "candidate_deployment_status": "NOT_DEPLOYED",
+  "candidate_deployment_status": "DEPLOYED_VERIFIED",
   "candidate_schema": {
     "method_count": 10,
-    "views": ["get_bond", "get_bond_ids", "get_claim_status"],
-    "writes": ["accept_bond", "check_policy", "claim_compensation", "create_bond", "enroll_subscriber", "fund_bond", "release_collateral"],
-    "source": "Local GenVM lint and SDK validation; no deployed schema receipt exists for this candidate."
+    "views": [
+      "get_bond",
+      "get_bond_ids",
+      "get_claim_status"
+    ],
+    "writes": [
+      "accept_bond",
+      "check_policy",
+      "claim_compensation",
+      "create_bond",
+      "enroll_subscriber",
+      "fund_bond",
+      "release_collateral"
+    ],
+    "source": "Verified against deployed source bytes and live Studio Dev schema at contract_address."
   },
   "candidate_read_probe": {
     "date": "2026-10-14",
@@ -1731,5 +2086,21 @@
     "result": "ERROR",
     "error": "Can't reconnect until invalid transaction is rolled back. Please rollback() fully before proceeding (Background on this error at: https://sqlalche.me/e/20/8s2b)",
     "interpretation": "Same server-side error for both independent contract reads; does not by itself prove every Studio Dev RPC method is unavailable."
-  }
+  },
+  "historical_verifications": [
+    {
+      "scope": "HISTORICAL_RELEASE_AT_VERIFICATION_TIME",
+      "chain_id": 61997,
+      "deployment_status": {
+        "status": "FINALIZED",
+        "statusCode": 7
+      },
+      "local_source_sha256": "e1987c6d5b2cff228025e5be8d20d570cd436e05f797569b66020906f0cc1554",
+      "deployed_source_sha256": "e1987c6d5b2cff228025e5be8d20d570cd436e05f797569b66020906f0cc1554",
+      "exact_bytes_match": true,
+      "current_candidate_source_sha256": "94f4c585126a8d99348ffcca478b8dd4a157aaf2ca93c84d6a8864585493ac5a",
+      "contract_address": "0x8A5cb514A6b8Eae009cB896F0EcAC2F208d954F9",
+      "deployment_transaction_hash": "0x0a37753101ddc15e274c3dbe0e744dc5c2138575dfb4006a21df43c1df82a8af"
+    }
+  ]
 }

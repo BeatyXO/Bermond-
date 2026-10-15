@@ -40,6 +40,7 @@ def main() -> int:
 
     schema = rpc("gen_getContractSchema", [address])
     status = rpc("gen_getTransactionStatus", [{"txId": deployment["hash"]}])
+    transaction = rpc("eth_getTransactionByHash", [deployment["hash"]])
     expected_methods = {
         "create_bond",
         "enroll_subscriber",
@@ -57,6 +58,38 @@ def main() -> int:
         raise RuntimeError(f"Unexpected contract schema methods: {sorted(actual_methods)}")
     if status.get("status", "").upper() != "FINALIZED":
         raise RuntimeError(f"Deployment is not finalized: {status}")
+    if transaction.get("status", "").upper() != "FINALIZED":
+        raise RuntimeError(f"Deployment transaction is not finalized: {transaction.get('status')}")
+    if transaction.get("result_name") != "MAJORITY_AGREE":
+        raise RuntimeError(
+            "Deployment did not reach accepted consensus: "
+            f"{transaction.get('result_name')}"
+        )
+    execution = transaction.get("txExecutionResultName")
+    if execution != "FINISHED_WITH_RETURN":
+        raise RuntimeError(f"Deployment execution did not succeed: {execution}")
+
+    previous = manifest.get("verification")
+    if previous and previous.get("local_source_sha256") != local_hash:
+        historical = manifest.setdefault("historical_verifications", [])
+        attempt = next(
+            (
+                item
+                for item in manifest.get("deployment_attempts", [])
+                if item.get("source_sha256") == previous.get("local_source_sha256")
+                and item.get("contract_address")
+            ),
+            None,
+        )
+        preserved = {**previous}
+        if attempt:
+            preserved["contract_address"] = attempt["contract_address"]
+            preserved["deployment_transaction_hash"] = attempt["hash"]
+        if not any(
+            item.get("local_source_sha256") == preserved.get("local_source_sha256")
+            for item in historical
+        ):
+            historical.append(preserved)
 
     manifest["schema"] = schema
     manifest["code_parity"] = "EXACT_BYTES_MATCH"
@@ -66,11 +99,13 @@ def main() -> int:
     manifest["verification"] = {
         "chain_id": manifest["network"]["chain_id"],
         "deployment_status": status,
+        "deployment_outcome": transaction.get("result_name"),
+        "deployment_execution_result": execution,
         "local_source_sha256": local_hash,
         "deployed_source_sha256": remote_hash,
         "exact_bytes_match": True,
     }
-    manifest["blocker"] = "Full create/enroll/fund/BREACHED-check/claim lifecycle succeeded on the verified deployment. Claim emitted the finalized 1-GEN EOA transfer; the beneficiary balance increased by approximately 1 GEN net across the test window. Studio gen_call remains unhealthy, and expiry release is not yet tested."
+    manifest["deployment_verification_note"] = "Deployment finality, exact source bytes, and live schema verified by tools/verify_studio_dev.py."
     MANIFEST.write_bytes((json.dumps(manifest, indent=2) + "\n").encode("utf-8"))
     print(f"contract_address={address}")
     print(f"deployment_status={status.get('status')}")

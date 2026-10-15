@@ -4,11 +4,11 @@ Bermond is a GenLayer service-assurance protocol. A provider locks GEN collatera
 
 ## Current status
 
-The repository contains a hardened contract candidate, its React/Vite frontend, reproducible fake-runtime and GenLayer Direct Mode tests, and deployment tooling. **The current candidate is not deployed.** It changes the contract schema and source, so it cannot be represented by the prior Studio deployment.
+The current contract is deployed and source-matched on Studio Dev (chain ID `61997`) at `0x50039c8Aa426aF3e2F3Cc2DB0677BdfaC5c57A37`. Deployment transaction: `0xd925f95f25c2508b2e4bf5987c501c89e3f8a70d64fdecccb08ce90cd828f96c`. The deployed bytes exactly match source SHA-256 `94f4c585126a8d99348ffcca478b8dd4a157aaf2ca93c84d6a8864585493ac5a`. This verifies deployment and schema, not a successful compensation lifecycle.
 
 The preserved Studio Dev manifest records an earlier deployment at `0x8A5cb514A6b8Eae009cB896F0EcAC2F208d954F9` (chain ID `61997`), deployment transaction `0x0a37753101ddc15e274c3dbe0e744dc5c2138575dfb4006a21df43c1df82a8af`, and source SHA-256 `e1987c6d5b2cff228025e5be8d20d570cd436e05f797569b66020906f0cc1554`. Its claim and expiry-release transaction evidence remains in [`deployments/studio-dev.json`](deployments/studio-dev.json). Those receipts belong to the earlier source. They show finalized contract executions and emitted external-message records, not authoritative beneficiary balance changes.
 
-The current Studio Dev `gen_call` read path returns the same SQLAlchemy rollback error for calls to two separate previously deployed contracts. The matching v0.6 documentation says external EOA value transfers execute at finalization, but does not document a callback or atomic rollback guarantee that Bermond can use to reconcile failed or ambiguous settlement. The candidate records such outbound amounts as `pending_wei`; it never labels them paid or released. The pinned `web.get` response does not expose an HTTP status in Direct Mode, and no final response origin/redirect check is demonstrated. No fresh deployment or state-changing lifecycle test is safe until the read/fee paths and transfer/evidence limitations are resolved.
+The candidate's finalized reads and fee estimation worked during the current Studio Dev run. A one-beneficiary bond was created, accepted, and funded with 1 GEN. Two finalized `check_policy` attempts ended `undetermined` with `MAJORITY_DISAGREE`; the bond stayed `ACTIVE`, and no claim was sent. After expiry, release transaction `0x3d7756ce5416ed3990e9574671e20362d0308e82245bf632be4ae22440e640fb` finalized with agreement. The bond is `CLOSED` with zero reserve, and the provider's finalized balance rose by `999873680999999177` wei after the 1 GEN release transaction. The contract still records the emitted amount as `pending_wei=1e18` and `released_wei=0`, so its internal accounting cannot reconcile the observed transfer. The breach payout and broader lifecycle matrix remain unverified. See [`deployments/studio-dev.json`](deployments/studio-dev.json).
 
 ## Contract lifecycle
 
@@ -23,7 +23,7 @@ The provider's declared baseline identity is bound to the bond fingerprint and b
 
 ## Test and build
 
-Python checks use the pinned GenLayer v0.6 RC tool family. `genvm-lint check` runs the GenVM lint and SDK semantic validation stages. Direct Mode uses the official `genlayer-test` runner and a small helper that arranges the official downloaded runner artifacts in the supported `GENVM_PREBUILT_DIR` layout. Direct Mode tests execute the contract locally with GenVM; they do not represent live Studio consensus or live transfer settlement.
+Python checks use the pinned GenLayer v0.6 RC tool family. `genvm-lint check` runs the GenVM lint and SDK semantic validation stages. Direct Mode uses the official `genlayer-test` runner and a small helper that arranges the official downloaded runner artifacts in the supported `GENVM_PREBUILT_DIR` layout. The latest local suite recorded 55 passing tests. Direct Mode tests execute the contract locally with GenVM; they do not represent live Studio consensus or live transfer settlement.
 
 ```bash
 python -m pip install -r requirements-dev.txt
@@ -42,14 +42,16 @@ npm run build
 npm test
 ```
 
-For Vercel, set `VITE_BERMOND_CONTRACT_ADDRESS` only after deploying and verifying a fresh contract whose source hash matches this candidate. Keep it empty to show the review-mode interface without synthetic live registry state. The proof lab uses explicitly illustrative scenarios; `/app` reads only the configured contract.
+For Vercel on Studio Dev, set `VITE_BERMOND_CONTRACT_ADDRESS=0x50039c8Aa426aF3e2F3Cc2DB0677BdfaC5c57A37`. This address matches the verified source SHA above. Keep the variable empty to show the review-mode interface without synthetic live registry state. The proof lab uses illustrative scenarios; `/app` reads only the configured contract.
 
 ## Remaining release blockers
 
-- The current candidate has no source-matched deployment, finalized new-schema lifecycle receipts, or authoritative live reads.
-- The network read endpoint needs recovery; the independent probes against both historical addresses currently fail identically.
-- The contract runtime's external EOA transfer settlement/rollback behavior needs an authoritative demonstration or supported reconciliation interface. Until then, amounts stay in `pending_wei`, and payout/release success must not be claimed.
+- Two live checks on the breached fixture finalized as `MAJORITY_DISAGREE`, so the breach payout scenario was safely withheld. The reason for validator dissent is not included in the public finalized receipt and needs a code-level diagnosis.
+- The expiry release did transfer value to the provider, confirmed by the finalized balance delta and closed bond state, but the contract retains it as pending. There is no contract-level reconciliation path for moving that amount into `released_wei`.
+- The other requested live scenarios—compliant and improved changes, finalized unresolved evidence, partial claims, replay rejection, and adversarial classifications—have not all been demonstrated on the current deployment.
+- A finalized contract execution alone does not prove an EOA balance change. This release did have a balance delta; the breach payout and general transfer failure/recovery behavior remain unverified.
 - The provider-declared policy baseline is not publisher-authenticated or historically proven; runtime URL redirect/final-origin guarantees are not established.
 - Permissionless checks still require a human or client to submit a transaction before coverage ends. Policy changes can go unnoticed.
+- Desktop review covered the live registry, illustrative proof lab, and create-bond wizard. A real injected-wallet browser session remains outstanding; frontend tests do not replace it.
 
 See [`docs/PROTOCOL.md`](docs/PROTOCOL.md), [`docs/THREAT_MODEL.md`](docs/THREAT_MODEL.md), [`docs/ACCEPTANCE.md`](docs/ACCEPTANCE.md), and the deployment evidence in [`deployments/studio-dev.json`](deployments/studio-dev.json).
