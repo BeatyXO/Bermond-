@@ -217,7 +217,7 @@
   },
   "code_parity": "EXACT_BYTES_MATCH",
   "receipt_finality": "FINALIZED_SUCCESS",
-  "blocker": "Breach claim tested; inspect the finalized receipt, post-claim state and beneficiary balance delta. Contract accounting retains emitted EOA transfers as pending until settlement is independently reconciled.",
+  "blocker": "Live compliant, unresolved, improved, and breach-claim paths are verified. Outbound transfers remain pending in contract accounting; current-deployment expiry, partial-claim, replay, and adversarial live tests remain outstanding.",
   "studio_transfer_note": "Studio Dev documentation describes outgoing GEN value transfers to EOAs, and historical receipts contain outgoing message records. This does not establish recipient balance deltas or rollback/reconciliation semantics for the current candidate.",
   "cases": [
     {
@@ -2039,6 +2039,110 @@
       "beneficiary_balance_before_claim_wei": 201996086420749964673,
       "beneficiary_balance_after_claim_wei": 202995960082999963850,
       "beneficiary_balance_delta_wei": 999873662249999177
+    },
+    {
+      "id": "studio-improved-1792193606",
+      "expected": "COMPLIANT",
+      "baseline_url": "https://raw.githubusercontent.com/BeatyXO/Bermond-/a9eab6aa2be30d81c8d296e38a9f8ef366f64761/deployments/fixtures/baseline.txt",
+      "current_url": "https://raw.githubusercontent.com/BeatyXO/Bermond-/ca21198d346f2a1a943cf5e9223cbc4be62254f7/deployments/fixtures/improved.txt",
+      "provider": "0xD6423aE82a975d55C6CeaC222827A727325e0459",
+      "beneficiary": "0x39680bd423437C0Eaa18493629652821Ec672C61",
+      "payout_wei": 1000000000000000000,
+      "policy_fingerprint": "e9f21d5eff23d9f167cd6a5b2321d70571317b656d93261e458af476682ed20a",
+      "baseline_identity": {
+        "document_id": "bermond-fixture-baseline-v1",
+        "publisher": "Bermond Studio Dev test fixture",
+        "version": "fixture-v1"
+      },
+      "receipts": [
+        {
+          "function": "create_bond",
+          "bond_id": "studio-improved-1792193606",
+          "hash": "0x7d09e865808b7a566f176e55e2f536f17c0776ac0aeb7b3cec1321080d1703ca",
+          "status": {
+            "state": "finalized",
+            "outcome": "accepted"
+          },
+          "execution_result": "FINISHED_WITH_RETURN",
+          "successful": true,
+          "leader_execution_succeeded": true,
+          "lifecycle_state": "finalized",
+          "consensus_outcome": "accepted",
+          "result_name": "MAJORITY_AGREE",
+          "runtime_error": null
+        },
+        {
+          "function": "enroll_subscriber",
+          "bond_id": "studio-improved-1792193606",
+          "hash": "0xa6818be2f2f1ad3af44df3a2e265d8c7e1ddd4f70cd8057cb4fddd6faf296b2e",
+          "status": {
+            "state": "finalized",
+            "outcome": "accepted"
+          },
+          "execution_result": "FINISHED_WITH_RETURN",
+          "successful": true,
+          "leader_execution_succeeded": true,
+          "lifecycle_state": "finalized",
+          "consensus_outcome": "accepted",
+          "result_name": "MAJORITY_AGREE",
+          "runtime_error": null
+        },
+        {
+          "function": "accept_bond",
+          "bond_id": "studio-improved-1792193606",
+          "hash": "0xa46575f321d83bd558852b228e9a5c379d9b52d59d9109352ab2554c9d7cbbb7",
+          "status": {
+            "state": "finalized",
+            "outcome": "accepted"
+          },
+          "execution_result": "FINISHED_WITH_RETURN",
+          "successful": true,
+          "leader_execution_succeeded": true,
+          "lifecycle_state": "finalized",
+          "consensus_outcome": "accepted",
+          "result_name": "MAJORITY_AGREE",
+          "runtime_error": null
+        },
+        {
+          "function": "fund_bond",
+          "bond_id": "studio-improved-1792193606",
+          "hash": "0xaf79dfea6ce989308386abc726bc505398a1d4e00381ed80ba3df21e686f2f11",
+          "status": {
+            "state": "finalized",
+            "outcome": "accepted"
+          },
+          "execution_result": "FINISHED_WITH_RETURN",
+          "successful": true,
+          "leader_execution_succeeded": true,
+          "lifecycle_state": "finalized",
+          "consensus_outcome": "accepted",
+          "result_name": "MAJORITY_AGREE",
+          "runtime_error": null
+        },
+        {
+          "function": "check_policy",
+          "bond_id": "studio-improved-1792193606",
+          "hash": "0x16f24db594a4d346ad4590366d731b97d9469067a4f564a18d05995ba584c251",
+          "status": {
+            "state": "finalized",
+            "outcome": "accepted"
+          },
+          "execution_result": "FINISHED_WITH_RETURN",
+          "successful": true,
+          "leader_execution_succeeded": true,
+          "lifecycle_state": "finalized",
+          "consensus_outcome": "accepted",
+          "result_name": "MAJORITY_AGREE",
+          "runtime_error": null
+        }
+      ],
+      "state": "ACTIVE",
+      "last_verdict": "COMPLIANT",
+      "claim_deadline": 1792197866,
+      "release_eligible_after": 1792197867,
+      "beneficiary_balance_before_claim_wei": null,
+      "beneficiary_balance_after_claim_wei": null,
+      "beneficiary_balance_delta_wei": null
     }
   ],
   "lifecycle_transactions": [
@@ -3204,6 +3308,86 @@
       "function": "claim_compensation",
       "bond_id": "studio-breach-1792193081",
       "hash": "0xa5b38789861ac8a8a5040a9ca66f4b57ffbcfce5a2ae54bb4b806ab73c126a58",
+      "status": {
+        "state": "finalized",
+        "outcome": "accepted"
+      },
+      "execution_result": "FINISHED_WITH_RETURN",
+      "successful": true,
+      "leader_execution_succeeded": true,
+      "lifecycle_state": "finalized",
+      "consensus_outcome": "accepted",
+      "result_name": "MAJORITY_AGREE",
+      "runtime_error": null
+    },
+    {
+      "function": "create_bond",
+      "bond_id": "studio-improved-1792193606",
+      "hash": "0x7d09e865808b7a566f176e55e2f536f17c0776ac0aeb7b3cec1321080d1703ca",
+      "status": {
+        "state": "finalized",
+        "outcome": "accepted"
+      },
+      "execution_result": "FINISHED_WITH_RETURN",
+      "successful": true,
+      "leader_execution_succeeded": true,
+      "lifecycle_state": "finalized",
+      "consensus_outcome": "accepted",
+      "result_name": "MAJORITY_AGREE",
+      "runtime_error": null
+    },
+    {
+      "function": "enroll_subscriber",
+      "bond_id": "studio-improved-1792193606",
+      "hash": "0xa6818be2f2f1ad3af44df3a2e265d8c7e1ddd4f70cd8057cb4fddd6faf296b2e",
+      "status": {
+        "state": "finalized",
+        "outcome": "accepted"
+      },
+      "execution_result": "FINISHED_WITH_RETURN",
+      "successful": true,
+      "leader_execution_succeeded": true,
+      "lifecycle_state": "finalized",
+      "consensus_outcome": "accepted",
+      "result_name": "MAJORITY_AGREE",
+      "runtime_error": null
+    },
+    {
+      "function": "accept_bond",
+      "bond_id": "studio-improved-1792193606",
+      "hash": "0xa46575f321d83bd558852b228e9a5c379d9b52d59d9109352ab2554c9d7cbbb7",
+      "status": {
+        "state": "finalized",
+        "outcome": "accepted"
+      },
+      "execution_result": "FINISHED_WITH_RETURN",
+      "successful": true,
+      "leader_execution_succeeded": true,
+      "lifecycle_state": "finalized",
+      "consensus_outcome": "accepted",
+      "result_name": "MAJORITY_AGREE",
+      "runtime_error": null
+    },
+    {
+      "function": "fund_bond",
+      "bond_id": "studio-improved-1792193606",
+      "hash": "0xaf79dfea6ce989308386abc726bc505398a1d4e00381ed80ba3df21e686f2f11",
+      "status": {
+        "state": "finalized",
+        "outcome": "accepted"
+      },
+      "execution_result": "FINISHED_WITH_RETURN",
+      "successful": true,
+      "leader_execution_succeeded": true,
+      "lifecycle_state": "finalized",
+      "consensus_outcome": "accepted",
+      "result_name": "MAJORITY_AGREE",
+      "runtime_error": null
+    },
+    {
+      "function": "check_policy",
+      "bond_id": "studio-improved-1792193606",
+      "hash": "0x16f24db594a4d346ad4590366d731b97d9469067a4f564a18d05995ba584c251",
       "status": {
         "state": "finalized",
         "outcome": "accepted"

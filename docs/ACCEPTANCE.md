@@ -26,10 +26,11 @@ The manifest retains historical finalized claim and expiry-release receipts. Tho
 
 - [x] Source SHA-256 `102bcb26c4d62b8f2bb3488e56043be621339954bf0beaa5685958b254d8693b` is deployed at `0xA42B4f4fB758A74B65b48faddB9ec92Af58158d0` on chain `61997`; deployment transaction `0x29472498004fbef0399a42b0b10645acc7a12564595ffde6aaab90d3395b610b` finalized with agreement, exact byte parity, and the expected 10-method schema.
 - [x] Equivalent-policy case `studio-equivalent-1792192420` finalized `COMPLIANT` with `MAJORITY_AGREE`; no claim was sent.
+- [x] Improved-policy case `studio-improved-1792193606` finalized `COMPLIANT` with `MAJORITY_AGREE`; no claim was sent.
 - [x] Missing-evidence case `studio-unavailable-1792192161` finalized and stored `UNRESOLVED`; no claim was sent.
 - [x] Corrected breach case `studio-breach-1792193081` finalized `BREACHED`; one claim finalized in `0xa5b38789861ac8a8a5040a9ca66f4b57ffbcfce5a`. The beneficiary balance delta was `999873662249999177` wei. Finalized state reads showed `claimed=true`, `reserved_wei=0`, `pending_wei=1e18`, and `paid_wei=0`.
 - [ ] The claim transfer remains pending in contract accounting because no authoritative settlement reconciliation path exists. The balance delta is independent evidence of this one transfer; it does not provide a safe generic recovery mechanism.
-- [ ] Improved-policy, current-deployment expiry release, partial-claim, replay, and adversarial live scenarios remain unverified. The earlier successful release receipt belongs to a different source-matched deployment.
+- [ ] Current-deployment expiry release, partial-claim, replay, and adversarial live scenarios remain unverified. The earlier successful release receipt belongs to a different source-matched deployment.
 - [ ] Publisher identity and historical authority remain provider-declared. Final URL/redirect behavior for the pinned web transport is not established.
 - [ ] Permissionless checks still require a caller to submit a transaction; no autonomous observer or keeper exists.
 - [ ] Browser interaction with an injected wallet, independent security/fuzz review, and transfer-failure/reconciliation behavior remain outstanding.
@@ -38,4 +39,4 @@ The current source is deployed and verified, and live compliant, unavailable-evi
 
 ## CI evidence
 
-The starting commit `b20e3ddaf6da14196b53e3f88133e35cb3ac4186` failed [run 38549571545](https://github.com/BeatyXO/Bermond-/actions/runs/38549571545) during GenVM lint/artifact validation. The later candidate workflow passed on [`282a5b6d64427d38b51fb09780dbd7fbf53a1bc2`](https://github.com/BeatyXO/Bermond-/commit/282a5b6d64427d38b51fb09780dbd7fbf53a1bc2) in [run 38645305068](https://github.com/BeatyXO/Bermond-/actions/runs/38645305068), including frontend and contract jobs. The current contract, tests, lifecycle evidence, and documentation still require their own pushed CI result.
+The starting commit `b20e3ddaf6da14196b53e3f88133e35cb3ac4186` failed [run 38549571545](https://github.com/BeatyXO/Bermond-/actions/runs/38549571545) during GenVM lint/artifact validation. The current implementation at [`6f228fb8715ed2316c066257bfecede5b8cb3c0e`](https://github.com/BeatyXO/Bermond-/commit/6f228fb8715ed2316c066257bfecede5b8cb3c0e) passed [run 38982038494](https://github.com/BeatyXO/Bermond-/actions/runs/38982038494): frontend and contract-unit jobs both succeeded, including GenVM lint, SDK validation, and Direct Mode tests.

@@ -8,7 +8,7 @@ The current contract is deployed and source-matched on Studio Dev (chain ID `619
 
 The preserved Studio Dev manifest records an earlier deployment at `0x8A5cb514A6b8Eae009cB896F0EcAC2F208d954F9` (chain ID `61997`), deployment transaction `0x0a37753101ddc15e274c3dbe0e744dc5c2138575dfb4006a21df43c1df82a8af`, and source SHA-256 `e1987c6d5b2cff228025e5be8d20d570cd436e05f797569b66020906f0cc1554`. Its claim and expiry-release transaction evidence remains in [`deployments/studio-dev.json`](deployments/studio-dev.json). Those receipts belong to the earlier source. They show finalized contract executions and emitted external-message records, not authoritative beneficiary balance changes.
 
-The current deployment has finalized live scenarios for missing evidence (`UNRESOLVED`, no claim), equivalent policy (`COMPLIANT`, no claim), and a material allowance breach (`BREACHED`, followed by a finalized one-time 1 GEN claim). The beneficiary's balance increased by `999873662249999177` wei across the claim transaction after transaction costs. The contract deliberately retains the emitted transfer as `pending_wei=1e18` with `paid_wei=0`; it has no authoritative settlement-reconciliation path. The earlier expiry-release receipt belongs to an older source-matched deployment, not this release. Improved-policy, current-release, partial-claim, replay, and adversarial live cases remain unverified. See [`deployments/studio-dev.json`](deployments/studio-dev.json).
+The current deployment has finalized live scenarios for missing evidence (`UNRESOLVED`, no claim), equivalent and improved policies (`COMPLIANT`, no claim), and a material allowance breach (`BREACHED`, followed by a finalized one-time 1 GEN claim). The beneficiary's balance increased by `999873662249999177` wei across the claim transaction after transaction costs. The contract deliberately retains the emitted transfer as `pending_wei=1e18` with `paid_wei=0`; it has no authoritative settlement-reconciliation path. The earlier expiry-release receipt belongs to an older source-matched deployment, not this release. Current-release, partial-claim, replay, and adversarial live cases remain unverified. See [`deployments/studio-dev.json`](deployments/studio-dev.json).
 
 ## Contract lifecycle
 
@@ -42,7 +42,7 @@ npm run build
 npm test
 ```
 
-For Vercel on Studio Dev, set `VITE_BERMOND_CONTRACT_ADDRESS=0xA42B4f4fB758A74B65b48faddB9ec92Af58158d0` and `VITE_BERMOND_NETWORK=studio-dev`. The address matches the verified source SHA above. Keep the address empty to show the review-mode interface without synthetic live registry state. The proof lab uses illustrative scenarios; `/app` reads only the configured contract.
+For Vercel on Studio Dev (chain ID `61997`), set `VITE_BERMOND_CONTRACT_ADDRESS=0xA42B4f4fB758A74B65b48faddB9ec92Af58158d0`. This is the only required frontend environment variable; the app uses the Studio Dev chain preset. The address matches the verified source SHA above. Leave it empty to show the review-mode interface without synthetic live registry state. The proof lab uses illustrative scenarios; `/app` reads only the configured contract.
 
 ## Remaining release blockers
 
