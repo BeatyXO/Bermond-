@@ -126,10 +126,6 @@ def _normalized_quote(value: str) -> str:
     return ' '.join(value.split()).casefold()
 
 
-def _normalized_fact(value: str) -> str:
-    return ' '.join(''.join(ch.casefold() if ch.isalnum() else ' ' for ch in value).split())
-
-
 def validate_semantics(value: Any, baseline_body: str | None = None,
                        current_body: str | None = None) -> dict[str, Any]:
     require(type(value) is dict and set(value) == {'criteria', 'reasoning'}, 'semantic shape rejected')
@@ -170,9 +166,11 @@ def validate_semantics(value: Any, baseline_body: str | None = None,
 
 
 def comparison_core(result: dict[str, Any]) -> list[list[str]]:
-    # Ignore harmless casing and punctuation, but require validator agreement
-    # on material factual premises, source pairs, excerpts, and full digests.
-    return [[i['dimension'], i['status'], i['witness'], canonical(i['evidence']), _normalized_fact(i['fact'])] for i in result['criteria']]
+    # Consensus binds each classification to exact, hash-verified source
+    # excerpts. The model-written fact is explanatory prose: requiring its
+    # wording to match made otherwise identical validator findings disagree.
+    # It is never used to determine eligibility, verdict, payout, or state.
+    return [[i['dimension'], i['status'], i['witness'], canonical(i['evidence'])] for i in result['criteria']]
 
 
 def derived_verdict(result: dict[str, Any]) -> str:
@@ -207,6 +205,12 @@ def read_evidence(url: str, expected_sha: str = '') -> dict[str, str] | None:
         return {'url': url, 'sha256': '', 'body': '', 'error': f'utf8_decode_failed:{type(exc).__name__}'}
     if not body.strip() or len(body) > MAX_WEB:
         return {'url': url, 'sha256': '', 'body': '', 'error': 'web_body_empty_or_too_large'}
+    normalized_body = ' '.join(body.casefold().split())
+    # The pinned Studio Dev web transport currently exposes a plain-text HTTP
+    # error body for some failures instead of a status_code. Do not present
+    # that transport response to the policy model as an authoritative policy.
+    if normalized_body in ('404: not found', '404 not found', '503: service unavailable', '503 service unavailable'):
+        return {'url': url, 'sha256': '', 'body': '', 'error': 'http_error_body'}
     try:
         digest = hashlib.sha256(body.encode('utf-8')).hexdigest()
     except Exception:

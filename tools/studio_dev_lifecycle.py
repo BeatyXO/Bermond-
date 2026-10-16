@@ -26,6 +26,7 @@ ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = ROOT / "deployments" / "studio-dev.json"
 CONTRACT = ROOT / "contracts" / "bermond.py"
 FIXTURE_BASE = "https://raw.githubusercontent.com/BeatyXO/Bermond-/a9eab6aa2be30d81c8d296e38a9f8ef366f64761/deployments/fixtures"
+IMPROVED_FIXTURE_BASE = "https://raw.githubusercontent.com/BeatyXO/Bermond-/ca21198d346f2a1a943cf5e9223cbc4be62254f7/deployments/fixtures"
 # Use a meaningful native transfer amount: tiny 1-wei transfers can behave
 # differently in chain-layer/Studio settlement than regular GEN payments.
 PAYOUT_WEI = 10**18
@@ -148,6 +149,12 @@ def main() -> int:
     parser.add_argument("--resume-case", help="Continue missing lifecycle steps for an existing test bond.")
     parser.add_argument("--release-test", action="store_true", help="Create and fund an ACTIVE 1-GEN bond for expiry-release testing.")
     parser.add_argument("--release-case", help="Release an existing expiry-test bond after its claim deadline.")
+    parser.add_argument(
+        "--scenario",
+        choices=("breach", "equivalent", "improved", "unavailable"),
+        default="breach",
+        help="Pinned public fixture to examine in the live cycle (default: breach).",
+    )
     args = parser.parse_args()
 
     manifest = read_manifest()
@@ -423,7 +430,22 @@ def main() -> int:
     # Git's Windows checkout may convert committed LF to CRLF, but the pinned
     # raw GitHub URL serves LF bytes. Commit the hash of the URL's byte form.
     baseline_hash = hashlib.sha256(baseline.replace(b"\r\n", b"\n")).hexdigest()
-    bond_id = f"studio-release-{int(time.time())}" if args.release_test else f"studio-breach-{int(time.time())}"
+    scenario = "breach" if args.release_test else args.scenario
+    fixture_base = IMPROVED_FIXTURE_BASE if scenario == "improved" else FIXTURE_BASE
+    fixture_name = {
+        "breach": "breached",
+        "equivalent": "equivalent",
+        "improved": "improved",
+        "unavailable": "missing",
+    }[scenario]
+    current_url = f"{fixture_base}/{fixture_name}.txt"
+    expected_verdict = {
+        "breach": "BREACHED",
+        "equivalent": "COMPLIANT",
+        "improved": "COMPLIANT",
+        "unavailable": "UNRESOLVED",
+    }[scenario]
+    bond_id = f"studio-release-{int(time.time())}" if args.release_test else f"studio-{scenario}-{int(time.time())}"
     now = int(time.time())
     # Leave room for transaction finalization before the contract's strict
     # one-hour minimum coverage duration begins at create_bond execution.
@@ -443,7 +465,7 @@ def main() -> int:
     policy_payload = [
         provider.address.lower(), bond_id, baseline_identity,
         f"{FIXTURE_BASE}/baseline.txt", baseline_hash,
-        f"{FIXTURE_BASE}/breached.txt", terms, PAYOUT_WEI,
+        current_url, terms, PAYOUT_WEI,
         coverage_ends, claim_deadline,
     ]
     policy_fingerprint = hashlib.sha256(
@@ -452,9 +474,9 @@ def main() -> int:
     manifest.setdefault("live_cases", []).append(
         {
             "id": bond_id,
-            "expected": "ACTIVE_RELEASE" if args.release_test else "BREACHED",
+            "expected": "ACTIVE_RELEASE" if args.release_test else expected_verdict,
             "baseline_url": f"{FIXTURE_BASE}/baseline.txt",
-            "current_url": f"{FIXTURE_BASE}/breached.txt",
+            "current_url": current_url,
             "provider": provider.address,
             "beneficiary": beneficiary.address,
             "payout_wei": PAYOUT_WEI,
@@ -474,7 +496,7 @@ def main() -> int:
         baseline_identity["document_id"],
         baseline_identity["publisher"],
         baseline_identity["version"],
-        f"{FIXTURE_BASE}/breached.txt",
+        current_url,
         json.dumps(terms, separators=(",", ":")),
         PAYOUT_WEI,
         coverage_ends,

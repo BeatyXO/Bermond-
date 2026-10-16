@@ -23,6 +23,13 @@ def test_read_evidence_rejects_raw_byte_hash_mismatch(env):
     assert evidence['error'].startswith('sha256_mismatch')
 
 
+@pytest.mark.parametrize('body', ['404: Not Found', '503 Service Unavailable'])
+def test_read_evidence_rejects_transport_error_bodies(env, body):
+    env.provider.body_by_url[B_URL] = body
+    evidence = env.mod.read_evidence(B_URL)
+    assert evidence['error'] == 'http_error_body'
+
+
 @pytest.mark.parametrize('status', [301, 404, 500])
 def test_read_evidence_rejects_non_success_http_status_when_transport_exposes_it(env, status):
     env.provider.body_by_url[B_URL] = BASE
@@ -344,7 +351,7 @@ def test_consensus_core_includes_witness_and_evidence(env):
     assert env.mod.comparison_core(left) != env.mod.comparison_core(right)
 
 
-def test_consensus_core_binds_material_fact_but_ignores_style(env):
+def test_consensus_core_ignores_explanatory_prose_but_binds_findings_and_evidence(env):
     left_payload = answer()
     right_payload = answer()
     left_payload['criteria'][0]['fact'] = 'The allowance remains 100,000 requests.'
@@ -354,7 +361,12 @@ def test_consensus_core_binds_material_fact_but_ignores_style(env):
     assert env.mod.comparison_core(left) == env.mod.comparison_core(right)
     right_payload['criteria'][0]['fact'] = 'The allowance is reduced to 50,000 requests.'
     contradictory = env.mod.validate_semantics(right_payload)
-    assert env.mod.comparison_core(left) != env.mod.comparison_core(contradictory)
+    # Explanatory prose is not consensus-authoritative. The independent
+    # validator's classification and exact source evidence are.
+    assert env.mod.comparison_core(left) == env.mod.comparison_core(contradictory)
+    right_payload['criteria'][0]['evidence'][1]['quote'] = 'Retention 30 days.'
+    contradictory_evidence = env.mod.validate_semantics(right_payload)
+    assert env.mod.comparison_core(left) != env.mod.comparison_core(contradictory_evidence)
 
 
 def test_evidence_digest_must_match_fetched_source(env):
