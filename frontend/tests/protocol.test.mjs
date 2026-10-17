@@ -81,6 +81,13 @@ test('wallet rejection during network switch is surfaced without adding a chain'
   assert.deepEqual(calls, ['wallet_switchEthereumChain']);
 });
 
+test('wallet errors show useful messages for rejected requests and provider error objects', async () => {
+  const { walletErrorText } = await importTypescript('../src/wallet-errors.ts');
+  assert.equal(walletErrorText({ code: 4001, message: 'User rejected the request.' }), 'Wallet request was rejected.');
+  assert.equal(walletErrorText({ message: 'Provider is disconnected.' }), 'Provider is disconnected.');
+  assert.equal(walletErrorText({ code: -1 }), 'The wallet request failed.');
+});
+
 test('connected account, network, accepted commitment and fresh state gate live actions', () => {
   assert.match(chain, /eth_accounts/);
   assert.match(chain, /eth_chainId/);

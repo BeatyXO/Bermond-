@@ -4,6 +4,7 @@ import {ArrowRight,ArrowUpRight,CheckCircle2,ChevronDown,ChevronLeft,ChevronRigh
 import {connectWallet,disconnectWallet,readAllBonds,readBond,walletAddress,walletNetworkIsStudio,switchWalletNetwork,writeBond,explorerUrl,readPendingWrite,readLastWrite,resumePendingWrite} from './chain';
 import type {PendingWrite} from './chain';
 import {walletAccountsChanged} from './wallet-session';
+import {walletErrorText as errorText} from './wallet-errors';
 import {PREVIEW_CASES} from './fixtures';
 import {DIMENSIONS,contractAddress,dimensionName,formatDate,formatGen,parseGen,short} from './protocol';
 import type {Bond,Clause,Dimension} from './protocol';
@@ -30,7 +31,6 @@ function App(){const [loc,setLoc]=useState(()=>routeOf(window.location.pathname)
  <footer className="footer"><div><LinkButton to="/" className="footer-logo">bermond<span>.</span></LinkButton><p>Making service promises impossible to quietly forget.</p></div><div className="footer-links"><LinkButton to="/proof">Proof lab <ArrowUpRight size={14}/></LinkButton><LinkButton to="/app">Bond registry <ArrowUpRight size={14}/></LinkButton><a href="https://github.com/BeatyXO/Bermond-" target="_blank" rel="noopener noreferrer">Source code <ArrowUpRight size={14}/></a></div><div className="footer-bottom">© 2026 BERMOND PROTOCOL <span>BUILT FOR GENLAYER · DESIGN PREVIEW ≠ ONCHAIN PROOF</span></div></footer>
  </div>
 }
-function errorText(error:unknown){return error instanceof Error?error.message:String(error)}
 function SectionKicker({children}:{children:React.ReactNode}){return <div className="section-kicker"><span className="kicker-square"/>{children}</div>}
 function Home(){return <>
  <section className="hero" aria-labelledby="hero-title"><div className="hero-grid" aria-hidden="true"/><div className="hero-copy"><div className="hero-eyebrow"><span className="sunburst">✳</span> INDEPENDENT ONCHAIN ACCOUNTABILITY <span className="dash">/</span> V.01</div><h1 id="hero-title">Promises,<br/><em>with</em> <span className="accent-word">consequences<span className="scribble">.</span></span></h1><p className="hero-description">Service providers make promises. Policies change. Customers pay the price. Bermond makes those promises <strong>verifiable, enforceable, and backed by real collateral.</strong></p><div className="hero-actions"><LinkButton to="/proof" className="btn btn-yellow">Explore the proof lab <ArrowUpRight size={18}/></LinkButton><LinkButton to="/app/create" className="btn btn-outline">Bond a promise <ArrowRight size={17}/></LinkButton></div><div className="hero-trust"><div className="trust-avatars"><span>B</span><span>G</span><span>✓</span></div><span>Independent AI validation.<br/><strong>Deterministic settlement.</strong></span></div></div>
