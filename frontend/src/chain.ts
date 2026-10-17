@@ -5,6 +5,7 @@ import type { TransactionHash } from 'genlayer-js/types';
 import { contractAddress } from './protocol';
 import type { Bond } from './protocol';
 import { classifyReceipt, submissionFailureMessage } from './tx-state';
+import { switchToStudioDev } from './wallet-network';
 import {
   currentAuthorizedAccount,
   isWalletDisconnected,
@@ -91,6 +92,15 @@ export async function walletNetworkIsStudio(): Promise<boolean> {
   if (!window.ethereum) return false;
   const chainId = await window.ethereum.request({ method: 'eth_chainId' });
   return typeof chainId === 'string' && chainId.toLowerCase() === STUDIO_DEV_CHAIN_ID;
+}
+
+export async function switchWalletNetwork(): Promise<void> {
+  const provider = window.ethereum;
+  if (!provider) throw new Error('Install a compatible browser wallet (for example MetaMask or Rabby).');
+  await switchToStudioDev(provider);
+  if (!await walletNetworkIsStudio()) {
+    throw new Error('The wallet did not switch to GenLayer Studio Dev (chain ID 61997).');
+  }
 }
 
 export async function connectWallet(): Promise<string> {

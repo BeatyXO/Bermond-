@@ -37,11 +37,48 @@ test('preview examples remain clearly separate from the live registry', () => {
 test('wallet connect is explicit and write path never re-prompts for account access', () => {
   assert.match(chain, /eth_requestAccounts/);
   assert.match(chain, /STUDIO_DEV_CHAIN_ID = '0xf22d'/);
+  assert.match(chain, /switchToStudioDev/);
+  assert.match(app, /Switch to GenLayer Studio Dev/);
   assert.match(chain, /authorizedWriteAccount/);
   const writePath = chain.slice(chain.indexOf('export async function writeBond'));
   assert.doesNotMatch(writePath, /eth_requestAccounts/);
   assert.match(writePath, /estimateTransactionFeesForWrite/);
   assert.match(writePath, /authorizedWriteAccount\(expectedAddress, provider\)/);
+});
+
+test('network switch targets only Studio Dev and adds it only when the wallet reports an unknown chain', async () => {
+  const { switchToStudioDev, STUDIO_DEV_CHAIN_ID } = await importTypescript('../src/wallet-network.ts');
+  const calls = [];
+  const provider = { request: async (request) => {
+    calls.push(request);
+    if (request.method === 'wallet_switchEthereumChain' && calls.length === 1) {
+      throw Object.assign(new Error('Unknown chain'), { code: 4902 });
+    }
+    return null;
+  } };
+  await switchToStudioDev(provider);
+  assert.deepEqual(calls.map((call) => call.method), [
+    'wallet_switchEthereumChain', 'wallet_addEthereumChain', 'wallet_switchEthereumChain',
+  ]);
+  assert.deepEqual(calls[0].params, [{ chainId: STUDIO_DEV_CHAIN_ID }]);
+  assert.deepEqual(calls[1].params[0], {
+    chainId: STUDIO_DEV_CHAIN_ID,
+    chainName: 'GenLayer Studio Dev',
+    nativeCurrency: { name: 'GEN', symbol: 'GEN', decimals: 18 },
+    rpcUrls: ['https://studio-dev.genlayer.com/api'],
+    blockExplorerUrls: ['https://explorer-studio-dev.genlayer.com'],
+  });
+});
+
+test('wallet rejection during network switch is surfaced without adding a chain', async () => {
+  const { switchToStudioDev } = await importTypescript('../src/wallet-network.ts');
+  const rejection = Object.assign(new Error('User rejected request'), { code: 4001 });
+  const calls = [];
+  await assert.rejects(switchToStudioDev({ request: async (request) => {
+    calls.push(request.method);
+    throw rejection;
+  } }), rejection);
+  assert.deepEqual(calls, ['wallet_switchEthereumChain']);
 });
 
 test('connected account, network, accepted commitment and fresh state gate live actions', () => {
