@@ -114,8 +114,6 @@ export async function connectWallet(): Promise<string> {
   if (typeof chainId !== 'string' || chainId.toLowerCase() !== STUDIO_DEV_CHAIN_ID) {
     throw new Error('Wrong network. Switch your wallet to GenLayer Studio Dev (chain ID 61997) before connecting or writing.');
   }
-  const client = createClient({ chain, account: accounts[0] as `0x${string}`, provider: provider as never });
-  await client.connect('studioDevnet');
   markWalletConnected();
   return accounts[0];
 }

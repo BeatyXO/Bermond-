@@ -40,6 +40,8 @@ test('wallet connect is explicit and write path never re-prompts for account acc
   assert.match(chain, /switchToStudioDev/);
   assert.match(app, /Switch to GenLayer Studio Dev/);
   assert.match(chain, /authorizedWriteAccount/);
+  const connectionPath = chain.slice(chain.indexOf('export async function connectWallet'), chain.indexOf('export function disconnectWallet'));
+  assert.doesNotMatch(connectionPath, /client\.connect\(/);
   const writePath = chain.slice(chain.indexOf('export async function writeBond'));
   assert.doesNotMatch(writePath, /eth_requestAccounts/);
   assert.match(writePath, /estimateTransactionFeesForWrite/);
